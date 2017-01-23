@@ -2,26 +2,44 @@ module Mrbmacs
   class Application
     include Scintilla
 
-    def doscan(prefix, e)
+    def key_press(state, keyval)
+      $stderr.puts "state = [#{state}], keyval = [#{keyval}]"
       mod_str = ""
-      case e[:state]
-      when Gdk::ModifierType::CONTROL_MASK
+      if (state & (1<<2)) == (1<<2) # CONTROL_MASK
         mod_str = "C-"
-      when Gdk::ModifierType::META_MASK
+      end
+      if (state & (1<<28)) == (1<<28) # META_MASK
         mod_str = "M-"
       end
-      key_str = prefix + mod_str
-      if e[:keyval] < 256
-        key_str = key_str + e[:keyval].chr
+
+      $stderr.puts "prefix_key = #{@prefix_key}"
+      key_str = @prefix_key + mod_str
+      if keyval < 256
+        key_str = key_str + keyval.chr
+        $stderr.puts "key_str = #{key_str}"
+        command = nil
+        if @command_list.has_key?(key_str)
+          $stderr.puts @command_list[key_str]
+          command = @command_list[key_str]
+        end
+        if command != nil
+          if command == "prefix"
+            @prefix_key = key_str + " "
+          else
+            extend(command)
+            @prefix_key = ""
+          end
+        else
+          @prefix_key = ""
+        end
+      elsif keyval == 0xff1b # GDK_KEY_Escape
+        @prefix_key = "M-"
       end
-      if @command_list.has_key?(key_str)
-        $stderr.puts @command_list[key_str]
-        return [key_str, @command_list[key_str]]
-      end
-      [key_str, nil]
+      @frame.modeline(self)
     end
 
-    def editloop()
+    def editloopx()
+      $stderr.puts "editloop"
       @prefix_key = ""
       @frame.mainwin.signal_connect("key-press-event") do |*o|
         e = o[0].get_struct
