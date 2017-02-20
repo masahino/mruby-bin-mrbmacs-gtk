@@ -1,7 +1,7 @@
 module Mrbmacs
   class Application
     def find_file(filename = nil)
-      filename = @frame.select_file("find file:")
+      filename = @frame.select_file("find file:", @current_buffer.directory)
       if filename != nil
         view_win = @frame.view_win
         @current_buffer.pos = view_win.sci_get_current_pos

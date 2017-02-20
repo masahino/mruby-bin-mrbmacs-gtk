@@ -6,6 +6,8 @@ struct mrb_mrbmacs_frame_data {
   mrb_value view_win;
   GtkWidget *mode_win;
   mrb_value echo_win;
+  GtkWidget *search_entry;
+  GtkWidget *find_button;
 };
 
 void mrbmacs_gtk_init(mrb_state *mrb);

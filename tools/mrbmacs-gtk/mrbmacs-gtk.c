@@ -8,6 +8,7 @@
 
 #include <locale.h>
 #include <gtk/gtk.h>
+#include <Scintilla.h>
 
 #include "mrbmacs-frame.h"
 
@@ -17,8 +18,33 @@ mrb_state *mrb;
 static gboolean
 mrbmacs_keypress(GtkWidget *widget, GdkEventKey *event, gpointer data)
 {
-  mrb_funcall(mrb, *(mrb_value *)data, "key_press", 2, mrb_fixnum_value(event->state),
+  mrb_value send_key;
+  send_key = mrb_funcall(mrb, *(mrb_value *)data, "key_press", 2, mrb_fixnum_value(event->state),
     mrb_fixnum_value(event->keyval));
+  if (mrb_type(send_key) == MRB_TT_TRUE) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
+static gboolean
+mrbmacs_sci_notify(GtkWidget *widget, gint n, SCNotification *notification, gpointer user_data)
+{
+  mrb_value ret;
+//  fprintf(stderr, "sci-notify %d, %p, %d\n", n, notification, notification->nmhdr.code);
+//  fprintf(stderr, "sci-notify %d\n", notification->nmhdr.code);
+  ret = mrb_funcall(mrb, *(mrb_value *)user_data, "sci_notify", 
+    2, mrb_fixnum_value(n), mrb_fixnum_value(notification->nmhdr.code));
+  return false;
+}
+
+static gboolean
+mrbmacs_find_button_press(GtkWidget *widget, GdkEventButton *event, gpointer user_data)
+{
+  mrb_value ret;
+  ret = mrb_funcall(mrb, *(mrb_value *)user_data, "isearch_forward",
+    0);
   return false;
 }
 
@@ -36,6 +62,10 @@ mrb_mrbmacs_editloop(mrb_state *mrb, mrb_value self)
   frame_obj = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@frame"));
   frame = (struct mrb_mrbmacs_frame_data *)DATA_PTR(frame_obj);
   g_signal_connect(G_OBJECT((GtkWidget *)DATA_PTR(frame->view_win)), "key-press-event", G_CALLBACK(mrbmacs_keypress), &self);
+  g_signal_connect(G_OBJECT((GtkWidget *)DATA_PTR(frame->view_win)), "sci-notify", G_CALLBACK(mrbmacs_sci_notify), &self);
+
+  // find button
+  g_signal_connect(G_OBJECT(frame->find_button), "button-press-event", G_CALLBACK(mrbmacs_find_button_press), &self);
   
   gtk_main();
   return self;
