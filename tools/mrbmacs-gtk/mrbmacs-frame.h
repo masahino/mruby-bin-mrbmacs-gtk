@@ -8,6 +8,7 @@ struct mrb_mrbmacs_frame_data {
   mrb_value echo_win;
   GtkWidget *search_entry;
   GtkWidget *find_button;
+  GtkWidget *notebook;
 };
 
 void mrbmacs_gtk_init(mrb_state *mrb);

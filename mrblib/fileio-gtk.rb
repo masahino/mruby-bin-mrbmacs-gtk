@@ -16,6 +16,7 @@ module Mrbmacs
         view_win.sci_set_lexer_language(@current_buffer.mode.name)
         @current_buffer.mode.set_style(view_win, @theme)
         view_win.sci_set_sel_back(true, 0xff0000)
+        @frame.set_buffer_name(@current_buffer.name)
       end
     end
   end
