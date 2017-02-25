@@ -11,5 +11,6 @@ module Mrbmacs
         win.sci_set_sel(win.sci_get_target_start, win.sci_get_target_end)
       end
     end
+
   end
 end

@@ -48,6 +48,16 @@ mrbmacs_find_button_press(GtkWidget *widget, GdkEventButton *event, gpointer use
   return false;
 }
 
+static gboolean
+mrbmacs_search_entry_insert(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
+{
+  mrb_value ret;
+fprintf(stderr, "insert-at-cursor\n");
+  ret = mrb_funcall(mrb, *(mrb_value *)user_data, "isearch_forward",
+    0);
+  return false;
+}
+
 static mrb_value
 mrb_mrbmacs_editloop(mrb_state *mrb, mrb_value self)
 {
@@ -61,11 +71,17 @@ mrb_mrbmacs_editloop(mrb_state *mrb, mrb_value self)
   
   frame_obj = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@frame"));
   frame = (struct mrb_mrbmacs_frame_data *)DATA_PTR(frame_obj);
-  g_signal_connect(G_OBJECT((GtkWidget *)DATA_PTR(frame->view_win)), "key-press-event", G_CALLBACK(mrbmacs_keypress), &self);
-  g_signal_connect(G_OBJECT((GtkWidget *)DATA_PTR(frame->view_win)), "sci-notify", G_CALLBACK(mrbmacs_sci_notify), &self);
+  g_signal_connect(G_OBJECT((GtkWidget *)DATA_PTR(frame->view_win)),
+    "key-press-event", G_CALLBACK(mrbmacs_keypress), &self);
+  g_signal_connect(G_OBJECT((GtkWidget *)DATA_PTR(frame->view_win)),
+    "sci-notify", G_CALLBACK(mrbmacs_sci_notify), &self);
 
   // find button
-  g_signal_connect(G_OBJECT(frame->find_button), "button-press-event", G_CALLBACK(mrbmacs_find_button_press), &self);
+  g_signal_connect(G_OBJECT(frame->find_button),
+    "button-press-event", G_CALLBACK(mrbmacs_find_button_press), &self);
+  // search entry
+  //g_signal_connect(G_OBJECT(frame->search_entry),
+  //"key-release-event", G_CALLBACK(mrbmacs_search_entry_insert), &self);
   
   gtk_main();
   return self;

@@ -64,6 +64,7 @@ mrb_mrbmacs_frame_select_buffer(mrb_state *mrb, mrb_value self)
     gtk_tree_selection_get_selected(selection, &model, &iter);
     gtk_tree_model_get(model, &iter, 0, &row_string, -1);
     buffer_name = mrb_str_new_cstr(mrb, row_string);
+    break;
     case GTK_RESPONSE_CANCEL:
     default:
     buffer_name = mrb_str_new_cstr(mrb, default_buffer_name);
@@ -91,7 +92,7 @@ mrb_mrbmacs_frame_search_entry_get_text(mrb_state *mrb, mrb_value self)
   GtkWidget *isearch_entry;
   struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
   isearch_entry = fdata->search_entry;
-//  gtk_widget_grab_focus(isearch_entry);
+  gtk_widget_grab_focus(isearch_entry);
   return mrb_str_new_cstr(mrb,
     gtk_entry_get_text(GTK_ENTRY(isearch_entry)));
 }
@@ -129,7 +130,11 @@ mrb_mrbmacs_frame_select_file(mrb_state *mrb, mrb_value self)
     filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
   }
   gtk_widget_destroy(dialog);
-  return mrb_str_new_cstr(mrb, filename);
+  if (filename == NULL) {
+    return mrb_nil_value();
+  } else {
+    return mrb_str_new_cstr(mrb, filename);
+  }
 }
 
 static mrb_value
