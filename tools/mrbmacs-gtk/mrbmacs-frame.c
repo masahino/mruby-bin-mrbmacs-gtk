@@ -147,7 +147,7 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   int font_width, font_height;
   mrb_value view, echo;
   struct mrb_mrbmacs_frame_data *fdata =
-  (struct mrb_mrbmacs_frame_data *)malloc(sizeof(struct mrb_mrbmacs_frame_data));
+  (struct mrb_mrbmacs_frame_data *)mrb_malloc(mrb, sizeof(struct mrb_mrbmacs_frame_data));
 
   mainwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 //  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
