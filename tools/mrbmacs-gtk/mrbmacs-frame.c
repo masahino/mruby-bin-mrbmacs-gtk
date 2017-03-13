@@ -1,4 +1,4 @@
-#include <locale.h>ev
+#include <locale.h>
 #include <gtk/gtk.h>
 
 #include "mruby.h"
@@ -92,7 +92,7 @@ mrb_mrbmacs_frame_search_entry_get_text(mrb_state *mrb, mrb_value self)
   GtkWidget *isearch_entry;
   struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
   isearch_entry = fdata->search_entry;
-  gtk_widget_grab_focus(isearch_entry);
+  gtk_entry_grab_focus_without_selecting(GTK_ENTRY(isearch_entry));
   return mrb_str_new_cstr(mrb,
     gtk_entry_get_text(GTK_ENTRY(isearch_entry)));
 }
@@ -108,6 +108,7 @@ mrb_mrbmacs_frame_set_mode_text(mrb_state *mrb, mrb_value self)
   mode_win = fdata->mode_win;
   fprintf(stderr, "mode_str = %s\n", mode_str);
   gtk_label_set_text(GTK_LABEL(mode_win), mode_str);
+  return self;
 }
 
 static mrb_value
@@ -140,8 +141,10 @@ mrb_mrbmacs_frame_select_file(mrb_state *mrb, mrb_value self)
 static mrb_value
 mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
 {
-  GtkWidget *mainwin, *vbox, *mode, *search_entry, *hbox;
-  GtkWidget *find_button;
+  GtkWidget *mainwin, *vbox, *mode, *search_entry, *replace_entry, *hbox1, *hbox2;
+  GtkWidget *find_next_button, *find_prev_button;
+  GtkWidget *replace_next_button, *replace_prev_button;
+  GtkWidget *grid;
   GtkWidget *notebook;
   struct RClass *scintilla_gtk_class;
   int font_width, font_height;
@@ -150,8 +153,8 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   (struct mrb_mrbmacs_frame_data *)mrb_malloc(mrb, sizeof(struct mrb_mrbmacs_frame_data));
 
   mainwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-//  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
-  vbox = gtk_vbox_new(false, 2);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+//  vbox = gtk_vbox_new(false, 2);
   gtk_container_add(GTK_CONTAINER(mainwin), vbox);
   
   notebook = gtk_notebook_new();
@@ -198,25 +201,57 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   gtk_box_pack_start(GTK_BOX(vbox), mode, TRUE, TRUE, 0);
   mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@mode_win"), mrb_cptr_value(mrb, mode));
   fdata->mode_win = mode;
-  
+
+  gtk_box_pack_start(GTK_BOX(vbox), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL), TRUE, TRUE, 0);
+
   echo = mrb_funcall(mrb, mrb_obj_value(scintilla_gtk_class), "new", 0);
   gtk_widget_set_size_request((GtkWidget*)DATA_PTR(echo), font_width*80, font_height);
-  gtk_box_pack_start(GTK_BOX(vbox), (GtkWidget *)DATA_PTR(echo), TRUE, TRUE, 0);
+//  gtk_box_pack_start(GTK_BOX(vbox), (GtkWidget *)DATA_PTR(echo), TRUE, TRUE, 0);
 
   mrb_funcall(mrb, echo, "sci_set_hscroll_bar", 1, mrb_false_value());
   mrb_funcall(mrb, echo, "sci_clear_cmd_key", 1, mrb_fixnum_value(SCK_RETURN));
 
   fdata->echo_win = echo;
   mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@echo_win"), echo);
+
+  // search box
+  grid = gtk_grid_new();
+  hbox1 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
+//  gtk_box_pack_start(GTK_BOX(vbox), hbox1, FALSE, FALSE, 2);
+  gtk_box_pack_start(GTK_BOX(vbox), grid, FALSE, FALSE, 2);
   
-  hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
-  gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 2);
-  search_entry = gtk_entry_new();
-  gtk_box_pack_start(GTK_BOX(hbox), search_entry, FALSE, FALSE, 2);
-  find_button = gtk_button_new_with_label("find");
-  gtk_box_pack_start(GTK_BOX(hbox), find_button, FALSE, FALSE, 2);
+  search_entry = gtk_search_entry_new();
+  gtk_widget_set_size_request(GTK_WIDGET(search_entry), 300, -1);
+//  gtk_box_pack_start(GTK_BOX(hbox1), search_entry, FALSE, FALSE, 2);
+  gtk_grid_attach(GTK_GRID(grid), search_entry, 0, 0, 1, 1);
+  find_next_button = gtk_button_new_with_label("Find Next");
+//  gtk_box_pack_start(GTK_BOX(hbox1), find_next_button, FALSE, FALSE, 2);
+  gtk_grid_attach_next_to(GTK_GRID(grid), find_next_button, search_entry, GTK_POS_RIGHT, 1, 1);
+  find_prev_button = gtk_button_new_with_label("Find Prev");
+//  gtk_box_pack_start(GTK_BOX(hbox1), find_prev_button, FALSE, FALSE, 2);
+  gtk_grid_attach_next_to(GTK_GRID(grid), find_prev_button, find_next_button, GTK_POS_RIGHT, 1, 1);
   fdata->search_entry = search_entry;
-  fdata->find_button = find_button;
+  fdata->find_prev_button = find_next_button;
+  fdata->find_prev_button = find_prev_button;
+
+  // replace box
+  hbox2 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
+//  gtk_box_pack_start(GTK_BOX(vbox), hbox2, FALSE, FALSE, 2);
+  replace_entry = gtk_search_entry_new();
+  gtk_widget_set_size_request(GTK_WIDGET(replace_entry), 240, -1);
+  gtk_entry_set_icon_from_icon_name(GTK_ENTRY(replace_entry), GTK_ENTRY_ICON_PRIMARY,"edit-find-replace");
+//  gtk_box_pack_start(GTK_BOX(hbox2), replace_entry, FALSE, FALSE, 2);
+  gtk_grid_attach_next_to(GTK_GRID(grid), replace_entry, search_entry, GTK_POS_BOTTOM, 1, 1);
+  replace_next_button = gtk_button_new_with_label("Replace Next");
+//  gtk_box_pack_start(GTK_BOX(hbox2), replace_next_button, FALSE, FALSE, 2);
+  gtk_grid_attach_next_to(GTK_GRID(grid), replace_next_button, replace_entry, GTK_POS_RIGHT, 1, 1);
+  replace_prev_button = gtk_button_new_with_label("Replace Prev");
+//  gtk_box_pack_start(GTK_BOX(hbox2), replace_prev_button, FALSE, FALSE, 2);
+  gtk_grid_attach_next_to(GTK_GRID(grid), replace_prev_button, replace_next_button, GTK_POS_RIGHT, 1, 1);
+  fdata->replace_entry = replace_entry;
+  fdata->replace_next_button = replace_next_button;
+  fdata->replace_prev_button = replace_prev_button;
+
 
   DATA_PTR(self) = fdata;
 
@@ -225,6 +260,8 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   mrb_funcall(mrb, view, "sci_set_focus", 1, mrb_true_value());
   mrb_funcall(mrb, echo, "sci_set_focus", 1, mrb_false_value());
   //set_default_style
+
+  gtk_box_pack_start(GTK_BOX(vbox), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL), FALSE, FALSE, 0);
       
   gtk_box_pack_start(GTK_BOX(vbox), gtk_statusbar_new(), TRUE, TRUE, 0);
 

@@ -49,11 +49,11 @@ mrbmacs_find_button_press(GtkWidget *widget, GdkEventButton *event, gpointer use
 }
 
 static gboolean
-mrbmacs_search_entry_insert(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
+mrbmacs_search_entry_changed(GtkSearchEntry *widget, gpointer user_data)
 {
   mrb_value ret;
-fprintf(stderr, "insert-at-cursor\n");
-  ret = mrb_funcall(mrb, *(mrb_value *)user_data, "isearch_forward",
+  fprintf(stderr, "entry-changed\n");
+  ret = mrb_funcall(mrb, *(mrb_value *)user_data, "isearch",
     0);
   return false;
 }
@@ -77,11 +77,11 @@ mrb_mrbmacs_editloop(mrb_state *mrb, mrb_value self)
     "sci-notify", G_CALLBACK(mrbmacs_sci_notify), &self);
 
   // find button
-  g_signal_connect(G_OBJECT(frame->find_button),
+  g_signal_connect(G_OBJECT(frame->find_next_button),
     "button-press-event", G_CALLBACK(mrbmacs_find_button_press), &self);
   // search entry
-  //g_signal_connect(G_OBJECT(frame->search_entry),
-  //"key-release-event", G_CALLBACK(mrbmacs_search_entry_insert), &self);
+  g_signal_connect(G_OBJECT(frame->search_entry),
+    "search-changed", G_CALLBACK(mrbmacs_search_entry_changed), &self);
   
   gtk_main();
   return self;
