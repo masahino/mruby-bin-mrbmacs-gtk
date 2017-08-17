@@ -20,6 +20,25 @@ static const struct mrb_data_type mrb_mrbmacs_frame_data_type = {
 };
 
 static mrb_value
+mrb_mrbmacs_frame_add_buffer(mrb_state *mrb, mrb_value self)
+{
+  char *buffer_name;
+  GtkWidget *tab;
+  struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
+
+  mrb_get_args(mrb, "z", &buffer_name);
+  fprintf(stderr, "%s\n", buffer_name);
+//  tab = (GtkWidget *)DATA_PTR(fdata->view_win);
+tab = gtk_button_new_with_label("hoge");
+  int i = gtk_notebook_append_page(GTK_NOTEBOOK(fdata->notebook), tab,
+    gtk_label_new("X"));
+  gtk_widget_show(tab);
+  fprintf(stderr, "tab num = %d\n", gtk_notebook_get_n_pages(GTK_NOTEBOOK(fdata->notebook)));
+  gtk_notebook_set_current_page(GTK_NOTEBOOK(fdata->notebook), 1);
+  fprintf(stderr, "%d\n", i);
+}
+
+static mrb_value
 mrb_mrbmacs_frame_select_buffer(mrb_state *mrb, mrb_value self)
 {
   char *default_buffer_name;
@@ -186,8 +205,11 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   fprintf(stderr, "font_height = %d\n", font_height);
   gtk_widget_set_size_request((GtkWidget *)DATA_PTR(view), font_width*(80+6), font_height*40);
 //  gtk_box_pack_start(GTK_BOX(vbox), (GtkWidget*)DATA_PTR(view), FALSE, FALSE, 0);
+  gtk_notebook_set_show_border(GTK_NOTEBOOK(notebook), TRUE);
+  gtk_widget_show(notebook);
+  gtk_widget_show((GtkWidget *)DATA_PTR(view));
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), (GtkWidget *)DATA_PTR(view), gtk_label_new(""));
-  gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), 0);
+//  gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), 0);
   fdata->notebook = notebook;
   mrb_funcall(mrb, view, "sci_set_caret_fore", 1, mrb_fixnum_value(0xffffff));
   mrb_funcall(mrb, view, "sci_set_caret_style", 1, mrb_fixnum_value(2));
@@ -290,4 +312,6 @@ mrbmacs_gtk_init(mrb_state *mrb)
     mrb_mrbmacs_frame_set_buffer_name, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, frame, "select_buffer",
     mrb_mrbmacs_frame_select_buffer, MRB_ARGS_REQ(2));
+  mrb_define_method(mrb, frame, "add_buffer",
+    mrb_mrbmacs_frame_add_buffer, MRB_ARGS_REQ(1));
 }
