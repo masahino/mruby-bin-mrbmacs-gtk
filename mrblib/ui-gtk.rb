@@ -37,6 +37,9 @@ module Mrbmacs
       #      @mode_win.set_text(mode_text)
     end
 
+    def modeline_refresh(app)
+    end
+
     def echo_gets(prompt, text = "", &block)
       @view_win.sci_set_focus(false)
       @echo_win.sci_set_focus(true)
