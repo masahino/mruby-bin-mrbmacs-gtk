@@ -22,9 +22,9 @@ mrbmacs_keypress(GtkWidget *widget, GdkEventKey *event, gpointer data)
   send_key = mrb_funcall(mrb, *(mrb_value *)data, "key_press", 2, mrb_fixnum_value(event->state),
     mrb_fixnum_value(event->keyval));
   if (mrb_type(send_key) == MRB_TT_TRUE) {
-    return false;
+    return FALSE;
   } else {
-    return true;
+    return TRUE;
   }
 }
 
@@ -36,7 +36,7 @@ mrbmacs_sci_notify(GtkWidget *widget, gint n, SCNotification *notification, gpoi
 //  fprintf(stderr, "sci-notify %d\n", notification->nmhdr.code);
   ret = mrb_funcall(mrb, *(mrb_value *)user_data, "sci_notify", 
     2, mrb_fixnum_value(n), mrb_fixnum_value(notification->nmhdr.code));
-  return false;
+  return FALSE;
 }
 
 static gboolean
@@ -45,7 +45,7 @@ mrbmacs_find_button_press(GtkWidget *widget, GdkEventButton *event, gpointer use
   mrb_value ret;
   ret = mrb_funcall(mrb, *(mrb_value *)user_data, "isearch_forward",
     0);
-  return false;
+  return FALSE;
 }
 
 static gboolean
@@ -55,7 +55,7 @@ mrbmacs_search_entry_changed(GtkSearchEntry *widget, gpointer user_data)
   fprintf(stderr, "entry-changed\n");
   ret = mrb_funcall(mrb, *(mrb_value *)user_data, "isearch",
     0);
-  return false;
+  return FALSE;
 }
 
 static mrb_value
