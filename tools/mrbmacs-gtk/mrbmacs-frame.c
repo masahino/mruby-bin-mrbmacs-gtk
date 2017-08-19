@@ -111,7 +111,12 @@ mrb_mrbmacs_frame_search_entry_get_text(mrb_state *mrb, mrb_value self)
   GtkWidget *isearch_entry;
   struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
   isearch_entry = fdata->search_entry;
+#if GTK_CHECK_VERSION(3, 16, 0)
   gtk_entry_grab_focus_without_selecting(GTK_ENTRY(isearch_entry));
+#else
+  gtk_widget_grab_focus(GTK_WIDGET(isearch_entry));
+#endif /* GTK_CHECK_VERSION(3, 16, 0) */
+
   return mrb_str_new_cstr(mrb,
     gtk_entry_get_text(GTK_ENTRY(isearch_entry)));
 }
