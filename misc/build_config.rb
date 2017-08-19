@@ -18,34 +18,36 @@ MRuby::Build.new do |conf|
   # conf.gem 'examples/mrbgems/c_and_ruby_extension_example'
   # conf.gem :github => 'masuidrive/mrbgems-example', :checksum_hash => '76518e8aecd131d047378448ac8055fa29d974a9'
   # conf.gem :git => 'git@github.com:masuidrive/mrbgems-example.git', :branch => 'master', :options => '-v'
+  conf.gem "#{MRUBY_ROOT}/mrbgems/mruby-bin-mrbc"
   conf.gem "#{MRUBY_ROOT}/mrbgems/mruby-eval"
   conf.gem "#{MRUBY_ROOT}/mrbgems/mruby-exit"
   conf.gem :github => 'iij/mruby-io'
   conf.gem :github => 'iij/mruby-dir'
   conf.gem :github => 'iij/mruby-pack'
-  conf.gem :github => 'mattn/mruby-pcre-regexp'
+  conf.gem :github => 'iij/mruby-regexp-pcre'
   conf.gem :github => 'ksss/mruby-file-stat'
   conf.gem :github => 'gromnitsky/mruby-dir-glob'
-  conf.gem :github => 'mattn/mruby-iconv'
+  conf.gem :github => 'mattn/mruby-iconv' do |g|
+    if RUBY_PLATFORM.include?('linux')
+      g.linker.libraries.delete 'iconv'
+    end
+  end
   conf.gem :github => 'masahino/mruby-scintilla-gtk' do |g|
-    g.cc.include_paths << "#{MRUBY_ROOT}/../scintilla/include"
     g.cc.flags << `pkg-config --cflags gtk+-3.0`.chomp
-    g.linker.flags_before_libraries << "#{MRUBY_ROOT}/../scintilla/bin/scintilla.a"
+    g.download_scintilla
     g.linker.flags_before_libraries << `pkg-config --libs gmodule-2.0 gtk+-3.0`.chomp
   end
   conf.gem :github => 'masahino/mruby-scintilla-base' do |g|
-    g.cc.include_paths << "#{MRUBY_ROOT}/../scintilla/include"
     g.cc.flags << `pkg-config --cflags gtk+-3.0`.chomp
   end
   conf.gem :github => 'masahino/mruby-mrbmacs-base'
   conf.gem "#{MRUBY_ROOT}/.." do |g|
-    g.cc.include_paths << "#{MRUBY_ROOT}/../scintilla/include"
     g.cc.flags << `pkg-config --cflags gtk+-3.0`.chomp
   end
-  conf.enable_cxx_abi
 
   # include the default GEMs
   conf.gembox 'default'
+  conf.gem :github => 'iij/mruby-require'
   # C compiler settings
   # conf.cc do |cc|
   #   cc.command = ENV['CC'] || 'gcc'
@@ -74,6 +76,7 @@ MRuby::Build.new do |conf|
   #   linker.option_library_path = '-L%s'
   #   linker.link_options = "%{flags} -o %{outfile} %{objs} %{libs}"
   # end
+  conf.linker.libraries << 'stdc++'
 
   # Archiver settings
   # conf.archiver do |archiver|
@@ -105,6 +108,5 @@ MRuby::Build.new do |conf|
 
   # bintest
   # conf.enable_bintest
-  conf.gem :github => 'mattn/mruby-require'
 end
 
