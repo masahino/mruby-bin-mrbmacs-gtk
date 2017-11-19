@@ -29,7 +29,7 @@ mrb_mrbmacs_frame_add_buffer(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "z", &buffer_name);
   fprintf(stderr, "%s\n", buffer_name);
 //  tab = (GtkWidget *)DATA_PTR(fdata->view_win);
-tab = gtk_button_new_with_label("hoge");
+  tab = gtk_button_new_with_label("hoge");
   int i = gtk_notebook_append_page(GTK_NOTEBOOK(fdata->notebook), tab,
     gtk_label_new("X"));
   gtk_widget_show(tab);
@@ -130,7 +130,6 @@ mrb_mrbmacs_frame_set_mode_text(mrb_state *mrb, mrb_value self)
 
   mrb_get_args(mrb, "z", &mode_str);
   mode_win = fdata->mode_win;
-  fprintf(stderr, "mode_str = %s\n", mode_str);
   gtk_label_set_text(GTK_LABEL(mode_win), mode_str);
   return self;
 }
@@ -200,14 +199,10 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
     mrb_str_new_lit(mrb, "Monospace"));
   mrb_funcall(mrb, view, "sci_style_set_size",
     2, mrb_fixnum_value(STYLE_DEFAULT), mrb_fixnum_value(14));
-  fprintf(stderr, "sss%d\n", mrb_type(mrb_funcall(mrb, view, "sci_text_width", 2, mrb_fixnum_value(STYLE_DEFAULT),
-      mrb_str_new_lit(mrb, "A"))));
   
   font_width = mrb_int(mrb, mrb_funcall(mrb, view, "sci_text_width", 2, mrb_fixnum_value(STYLE_DEFAULT),
       mrb_str_new_lit(mrb, "A")));
-  fprintf(stderr, "font_width = %d\n", font_width);
   font_height = mrb_int(mrb, mrb_funcall(mrb, view, "sci_text_height", 1, mrb_fixnum_value(1)));
-  fprintf(stderr, "font_height = %d\n", font_height);
   gtk_widget_set_size_request((GtkWidget *)DATA_PTR(view), font_width*(80+6), font_height*40);
 //  gtk_box_pack_start(GTK_BOX(vbox), (GtkWidget*)DATA_PTR(view), FALSE, FALSE, 0);
   gtk_notebook_set_show_border(GTK_NOTEBOOK(notebook), TRUE);
@@ -294,7 +289,7 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
 
   gtk_widget_show_all(mainwin);
   gtk_widget_grab_focus((GtkWidget *)DATA_PTR(view));
-  
+
   return self;
 }
 

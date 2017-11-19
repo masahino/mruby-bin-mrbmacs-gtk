@@ -32,8 +32,7 @@ static gboolean
 mrbmacs_sci_notify(GtkWidget *widget, gint n, SCNotification *notification, gpointer user_data)
 {
   mrb_value ret;
-//  fprintf(stderr, "sci-notify %d, %p, %d\n", n, notification, notification->nmhdr.code);
-//  fprintf(stderr, "sci-notify %d\n", notification->nmhdr.code);
+
   ret = mrb_funcall(mrb, *(mrb_value *)user_data, "sci_notify", 
     2, mrb_fixnum_value(n), mrb_fixnum_value(notification->nmhdr.code));
   return FALSE;
@@ -52,7 +51,7 @@ static gboolean
 mrbmacs_search_entry_changed(GtkSearchEntry *widget, gpointer user_data)
 {
   mrb_value ret;
-  fprintf(stderr, "entry-changed\n");
+
   ret = mrb_funcall(mrb, *(mrb_value *)user_data, "isearch",
     0);
   return FALSE;
@@ -64,7 +63,6 @@ mrb_mrbmacs_editloop(mrb_state *mrb, mrb_value self)
   mrb_value frame_obj;
   mrb_value prefix_key;
   struct mrb_mrbmacs_frame_data *frame;
-  fprintf(stderr, "editloop\n");
 
   prefix_key = mrb_str_new_lit(mrb, "");
   mrb_iv_set(mrb, self, mrb_intern_lit(mrb, "@prefix_key"), prefix_key);

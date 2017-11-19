@@ -33,7 +33,6 @@ module Mrbmacs
 
     def key_press(state, keyval)
       send_key = true
-      $stderr.puts "state = [#{state}], keyval = [#{keyval}]"
       mod_str = ""
       if (state & (1<<2)) == (1<<2) # CONTROL_MASK
         mod_str = "C-"
@@ -55,15 +54,12 @@ module Mrbmacs
         input_str = "Enter"
       end
 
-      $stderr.puts "prefix_key = #{@prefix_key}"
       key_str = @prefix_key + mod_str
 #      if keyval < 256
       if input_str != ""
         key_str = key_str + input_str
-        $stderr.puts "key_str = #{key_str}"
         command = nil
         if @command_list.has_key?(key_str)
-          $stderr.puts @command_list[key_str]
           command = @command_list[key_str]
         end
         if command != nil
