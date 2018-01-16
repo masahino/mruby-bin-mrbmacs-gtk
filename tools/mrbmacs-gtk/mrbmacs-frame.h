@@ -3,6 +3,7 @@
 
 struct mrb_mrbmacs_frame_data {
   GtkWidget *mainwin;
+  mrb_value edit_win;
   mrb_value view_win;
   GtkWidget *mode_win;
   mrb_value echo_win;

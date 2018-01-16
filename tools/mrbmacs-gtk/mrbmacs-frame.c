@@ -20,16 +20,78 @@ static const struct mrb_data_type mrb_mrbmacs_frame_data_type = {
 };
 
 static mrb_value
+scintilla_view_window_new(mrb_state *mrb, mrb_value self)
+{
+  struct RClass *scintilla_gtk_class;
+  int font_width, font_height;
+  mrb_value view;
+
+  scintilla_gtk_class = mrb_class_get_under(
+    mrb,
+    mrb_module_get(mrb, "Scintilla"), "ScintillaGtk");
+
+  view = mrb_funcall(mrb, mrb_obj_value(scintilla_gtk_class), "new", 0);
+
+  mrb_funcall(mrb, view, "sci_style_set_font",
+    2, mrb_fixnum_value(STYLE_DEFAULT),
+    mrb_str_new_lit(mrb, "Monospace"));
+  mrb_funcall(mrb, view, "sci_style_set_size",
+    2, mrb_fixnum_value(STYLE_DEFAULT), mrb_fixnum_value(14));
+
+  font_width = mrb_int(mrb, mrb_funcall(mrb, view, "sci_text_width", 2,
+      mrb_fixnum_value(STYLE_DEFAULT), mrb_str_new_lit(mrb, "A")));
+  font_height = mrb_int(mrb, mrb_funcall(mrb, view, "sci_text_height", 1, mrb_fixnum_value(1)));
+  gtk_widget_set_size_request((GtkWidget *)DATA_PTR(view), font_width*(80+6), font_height*40);
+
+  mrb_funcall(mrb, view, "sci_set_caret_fore", 1, mrb_fixnum_value(0xffffff));
+  mrb_funcall(mrb, view, "sci_set_caret_style", 1, mrb_fixnum_value(2));
+
+  return view;
+}
+
+static mrb_value
+scintilla_echo_window_new(mrb_state *mrb, mrb_value self)
+{
+  struct RClass *scintilla_gtk_class;
+  int font_width, font_height;
+  mrb_value echo;
+
+  scintilla_gtk_class = mrb_class_get_under(
+    mrb,
+    mrb_module_get(mrb, "Scintilla"), "ScintillaGtk");
+
+  echo = mrb_funcall(mrb, mrb_obj_value(scintilla_gtk_class), "new", 0);
+
+  mrb_funcall(mrb, echo, "sci_style_set_font",
+    2, mrb_fixnum_value(STYLE_DEFAULT),
+    mrb_str_new_lit(mrb, "Monospace"));
+  mrb_funcall(mrb, echo, "sci_style_set_size",
+    2, mrb_fixnum_value(STYLE_DEFAULT), mrb_fixnum_value(14));
+
+  font_width = mrb_int(mrb, mrb_funcall(mrb, echo, "sci_text_width", 2,
+      mrb_fixnum_value(STYLE_DEFAULT), mrb_str_new_lit(mrb, "A")));
+  font_height = mrb_int(mrb, mrb_funcall(mrb, echo, "sci_text_height", 1, mrb_fixnum_value(1)));
+
+  gtk_widget_set_size_request((GtkWidget*)DATA_PTR(echo), font_width*80, font_height);
+
+  mrb_funcall(mrb, echo, "sci_set_hscroll_bar", 1, mrb_false_value());
+  mrb_funcall(mrb, echo, "sci_clear_cmd_key", 1, mrb_fixnum_value(SCK_RETURN));
+
+  return echo;
+}
+
+static mrb_value
 mrb_mrbmacs_frame_add_buffer(mrb_state *mrb, mrb_value self)
 {
   char *buffer_name;
   GtkWidget *tab;
+  struct RClass *scintilla_gtk_class;
   struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
 
   mrb_get_args(mrb, "z", &buffer_name);
   fprintf(stderr, "%s\n", buffer_name);
-//  tab = (GtkWidget *)DATA_PTR(fdata->view_win);
   tab = gtk_button_new_with_label("hoge");
+
   int i = gtk_notebook_append_page(GTK_NOTEBOOK(fdata->notebook), tab,
     gtk_label_new("X"));
   gtk_widget_show(tab);
@@ -169,54 +231,52 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   GtkWidget *replace_next_button, *replace_prev_button;
   GtkWidget *grid;
   GtkWidget *notebook;
-  struct RClass *scintilla_gtk_class;
-  int font_width, font_height;
+  struct RClass *mrbmacs_module, *edit_class;
+//  int font_width, font_height;
   mrb_value view, echo;
+  mrb_value buffer, edit_win;
+
+  mrbmacs_module = mrb_module_get(mrb, "Mrbmacs");
+
+  mrb_get_args(mrb, "o", &buffer);
+
   struct mrb_mrbmacs_frame_data *fdata =
   (struct mrb_mrbmacs_frame_data *)mrb_malloc(mrb, sizeof(struct mrb_mrbmacs_frame_data));
 
   mainwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
-//  vbox = gtk_vbox_new(false, 2);
+
   gtk_container_add(GTK_CONTAINER(mainwin), vbox);
   
   notebook = gtk_notebook_new();
   gtk_notebook_set_tab_pos(GTK_NOTEBOOK(notebook), GTK_POS_TOP);
   gtk_box_pack_start(GTK_BOX(vbox), notebook, FALSE, FALSE, 0);
 
-  scintilla_gtk_class = mrb_class_get_under(
-    mrb,
-    mrb_module_get(mrb, "Scintilla"), "ScintillaGtk");
   DATA_TYPE(self) = &mrb_mrbmacs_frame_data_type;
   DATA_PTR(self) = NULL;
   fdata->mainwin = mainwin;
 
-  view = mrb_funcall(mrb, mrb_obj_value(scintilla_gtk_class), "new", 0);
-//  scintilla_send_message(SCINTILLA((GtkWidget *)DATA_PTR(view)), SCI_STYLESETSIZE, STYLE_DEFAULT, "Monospace");
+fprintf(stderr, "ss\n");
+  /* edit window */
+  /* initial buffer "*scratch*" */
+  edit_class = mrb_class_get_under(mrb, mrbmacs_module, "EditWindow");
+fprintf(stderr,"2\n");
+  edit_win = mrb_funcall(mrb, mrb_obj_value(mrb_class_get_under(mrb, mrbmacs_module, "EditWindow")),
+    "new", 6, self, buffer, mrb_fixnum_value(0), mrb_fixnum_value(0), mrb_fixnum_value(40), mrb_fixnum_value(80+6));
+fprintf(stderr, "ss\n");
+  view = scintilla_view_window_new(mrb, self);
+  mrb_funcall(mrb, edit_win, "sci=", 1, view);
+  fdata->edit_win = edit_win;
+  mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@edit_win"), edit_win);
+  fdata->view_win = view;
+  mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@view_win"), view);
 
-  mrb_funcall(mrb, view, "sci_style_set_font",
-    2, mrb_fixnum_value(STYLE_DEFAULT), 
-    mrb_str_new_lit(mrb, "Monospace"));
-  mrb_funcall(mrb, view, "sci_style_set_size",
-    2, mrb_fixnum_value(STYLE_DEFAULT), mrb_fixnum_value(14));
-  
-  font_width = mrb_int(mrb, mrb_funcall(mrb, view, "sci_text_width", 2, mrb_fixnum_value(STYLE_DEFAULT),
-      mrb_str_new_lit(mrb, "A")));
-  font_height = mrb_int(mrb, mrb_funcall(mrb, view, "sci_text_height", 1, mrb_fixnum_value(1)));
-  gtk_widget_set_size_request((GtkWidget *)DATA_PTR(view), font_width*(80+6), font_height*40);
-//  gtk_box_pack_start(GTK_BOX(vbox), (GtkWidget*)DATA_PTR(view), FALSE, FALSE, 0);
   gtk_notebook_set_show_border(GTK_NOTEBOOK(notebook), TRUE);
   gtk_widget_show(notebook);
   gtk_widget_show((GtkWidget *)DATA_PTR(view));
   gtk_notebook_append_page(GTK_NOTEBOOK(notebook), (GtkWidget *)DATA_PTR(view), gtk_label_new(""));
-//  gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), 0);
   fdata->notebook = notebook;
-  mrb_funcall(mrb, view, "sci_set_caret_fore", 1, mrb_fixnum_value(0xffffff));
-  mrb_funcall(mrb, view, "sci_set_caret_style", 1, mrb_fixnum_value(2));
   
-  fdata->view_win = view;
-  mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@view_win"), view);
-
   mode = gtk_label_new("");
   gtk_label_set_justify(GTK_LABEL(mode), GTK_JUSTIFY_LEFT);
   gtk_widget_set_halign(mode, GTK_ALIGN_START);
@@ -226,12 +286,7 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
 
   gtk_box_pack_start(GTK_BOX(vbox), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL), TRUE, TRUE, 0);
 
-  echo = mrb_funcall(mrb, mrb_obj_value(scintilla_gtk_class), "new", 0);
-  gtk_widget_set_size_request((GtkWidget*)DATA_PTR(echo), font_width*80, font_height);
-//  gtk_box_pack_start(GTK_BOX(vbox), (GtkWidget *)DATA_PTR(echo), TRUE, TRUE, 0);
-
-  mrb_funcall(mrb, echo, "sci_set_hscroll_bar", 1, mrb_false_value());
-  mrb_funcall(mrb, echo, "sci_clear_cmd_key", 1, mrb_fixnum_value(SCK_RETURN));
+  echo = scintilla_echo_window_new(mrb, self);
 
   fdata->echo_win = echo;
   mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@echo_win"), echo);
@@ -274,7 +329,6 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   fdata->replace_next_button = replace_next_button;
   fdata->replace_prev_button = replace_prev_button;
 
-
   DATA_PTR(self) = fdata;
 
   mrb_funcall(mrb, self, "set_default_style", 0);
@@ -301,7 +355,7 @@ mrbmacs_gtk_init(mrb_state *mrb)
   mrbmacs_module = mrb_module_get(mrb, "Mrbmacs");
   frame = mrb_class_get_under(mrb, mrbmacs_module, "Frame");
   mrb_define_method(mrb, frame, "initialize",
-    mrb_mrbmacs_frame_init, MRB_ARGS_NONE());
+    mrb_mrbmacs_frame_init, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, frame, "select_file",
     mrb_mrbmacs_frame_select_file, MRB_ARGS_REQ(2));
   mrb_define_method(mrb, frame, "set_mode_text",
