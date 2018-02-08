@@ -308,7 +308,7 @@ fprintf(stderr, "ss\n");
 //  gtk_box_pack_start(GTK_BOX(hbox1), find_prev_button, FALSE, FALSE, 2);
   gtk_grid_attach_next_to(GTK_GRID(grid), find_prev_button, find_next_button, GTK_POS_RIGHT, 1, 1);
   fdata->search_entry = search_entry;
-  fdata->find_prev_button = find_next_button;
+  fdata->find_next_button = find_next_button;
   fdata->find_prev_button = find_prev_button;
 
   // replace box

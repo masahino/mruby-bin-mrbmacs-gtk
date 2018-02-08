@@ -14,6 +14,7 @@ module Mrbmacs
         @target_start_pos = 0
       end
     end
+
     def isearch_forward()
       win = @frame.view_win
       $stderr.puts "isearch_forward"
@@ -23,5 +24,13 @@ module Mrbmacs
       isearch()
     end
 
+    def isearch_backward()
+      win = @frame.view_win
+      $stderr.puts "isearch_wackward"
+      $stderr.puts "["+win.sci_get_target_text+"]"
+      @target_start_pos = win.sci_get_current_pos - @frame.search_entry_get_text.length
+      @target_end_pos = 0
+      isearch()
+    end
   end
 end
