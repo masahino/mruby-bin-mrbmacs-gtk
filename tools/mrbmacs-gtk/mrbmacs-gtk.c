@@ -5,6 +5,8 @@
 #include "mruby.h"
 #include "mruby/variable.h"
 #include "mruby/data.h"
+#include "mruby/array.h"
+#include "mruby/hash.h"
 
 #include <locale.h>
 #include <gtk/gtk.h>
@@ -14,6 +16,31 @@
 
 const char init_file_name[] = ".mrbmacsrc";
 mrb_state *mrb;
+
+static gboolean
+mrbmacs_io_read_cb(GIOChannel *source, GIOCondition condition, gpointer data)
+{
+  gint fd;
+  mrb_value read_io_a, io_handler, cb;
+  int i;
+
+  fd = g_io_channel_unix_get_fd(source);
+  read_io_a = mrb_iv_get(mrb, *(mrb_value *)data, mrb_intern_lit(mrb, "@readings"));
+  io_handler = mrb_iv_get(mrb, *(mrb_value *)data, mrb_intern_lit(mrb, "@io_handler"));
+  for (i = 0; i < RARRAY_LEN(read_io_a); i++) {
+    mrb_value io_obj = mrb_ary_ref(mrb, read_io_a, i);
+    mrb_value fd_obj = mrb_funcall(mrb, io_obj, "fileno", 0);
+    if (mrb_fixnum(fd_obj) == fd) {
+      mrb_value args[2];
+      args[0] = *(mrb_value *)data;
+      args[1] = io_obj;
+      cb = mrb_hash_get(mrb, io_handler, io_obj);
+      mrb_yield_argv(mrb, cb, 2, args);
+      break;
+    }
+  }
+  return TRUE;
+}
 
 static gboolean
 mrbmacs_keypress(GtkWidget *widget, GdkEventKey *event, gpointer data)
@@ -31,10 +58,58 @@ mrbmacs_keypress(GtkWidget *widget, GdkEventKey *event, gpointer data)
 static gboolean
 mrbmacs_sci_notify(GtkWidget *widget, gint n, SCNotification *notification, gpointer user_data)
 {
-  mrb_value ret;
+  mrb_value ret, scn;
 
-  ret = mrb_funcall(mrb, *(mrb_value *)user_data, "sci_notify", 
-    2, mrb_fixnum_value(n), mrb_fixnum_value(notification->nmhdr.code));
+  scn = mrb_hash_new(mrb);
+  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "code"), mrb_fixnum_value(notification->nmhdr.code));
+  // Sci_Position position
+  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "position"), mrb_fixnum_value(notification->position));
+  // int ch
+  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "ch"), mrb_fixnum_value(notification->ch));
+  // int modifiers
+  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "modifiers"), mrb_fixnum_value(notification->modifiers));
+  // int modificationType
+  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "modification_type"),
+    mrb_fixnum_value(notification->modificationType));
+  // const char *text
+  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "text"), mrb_str_new_cstr(mrb, notification->text));
+  // Sci_Position length
+  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "length"), mrb_fixnum_value(notification->length));
+  // Sci_Position linesAdded
+  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "lines_added"), mrb_fixnum_value(notification->linesAdded));
+  // int message
+  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "message"), mrb_fixnum_value(notification->message));
+  // uptr_t wParam
+  // sptr_t lParam
+  // Sci_Position line
+  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "line"), mrb_fixnum_value(notification->line));
+  // int foldLevelNow
+  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "fold_level_now"),
+    mrb_fixnum_value(notification->foldLevelNow));
+  // int foldLevelPrev
+  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "fold_level_prev"),
+    mrb_fixnum_value(notification->foldLevelPrev));
+  // int margin
+  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "margin"), mrb_fixnum_value(notification->margin));
+  // int listType
+  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "list_type"), mrb_fixnum_value(notification->listType));
+  // int x
+  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "x"), mrb_fixnum_value(notification->x));
+  // int y
+  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "y"), mrb_fixnum_value(notification->y));
+  // int token
+  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "token"), mrb_fixnum_value(notification->token));
+  // int annotationLinesAdded
+  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "annotation_lines_added"),
+    mrb_fixnum_value(notification->annotationLinesAdded));
+  // int updated
+  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "updated"), mrb_fixnum_value(notification->updated));
+  // listCompletionMethod
+  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "list_completion_method"),
+    mrb_fixnum_value(notification->listCompletionMethod));
+
+  ret = mrb_funcall(mrb, *(mrb_value *)user_data, "sci_notify", 1, scn);
+
   return FALSE;
 }
 
@@ -71,6 +146,8 @@ mrb_mrbmacs_editloop(mrb_state *mrb, mrb_value self)
   mrb_value frame_obj;
   mrb_value prefix_key;
   struct mrb_mrbmacs_frame_data *frame;
+  mrb_value io_events_hash, io_events_keys, read_io_a;
+  int i;
 
   prefix_key = mrb_str_new_lit(mrb, "");
   mrb_iv_set(mrb, self, mrb_intern_lit(mrb, "@prefix_key"), prefix_key);
@@ -91,6 +168,14 @@ mrb_mrbmacs_editloop(mrb_state *mrb, mrb_value self)
   g_signal_connect(G_OBJECT(frame->search_entry),
     "search-changed", G_CALLBACK(mrbmacs_search_entry_changed), &self);
   
+  // IO events
+  read_io_a = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@readings"));
+  for (i = 0; i < RARRAY_LEN(read_io_a); i++) {
+    mrb_value fd = mrb_funcall(mrb, mrb_ary_ref(mrb, read_io_a, i), "fileno", 0);
+    GIOChannel *channel = g_io_channel_unix_new(mrb_fixnum(fd));
+//    g_io_channel_set_flags(channel, G_IO_FLAG_NONBLOCK, NULL);
+    g_io_add_watch(channel, G_IO_IN, mrbmacs_io_read_cb, &self);
+  }
   gtk_main();
   return self;
 }
@@ -125,8 +210,8 @@ main(int argc, char **argv)
 {
   struct RClass *mrbmacs_class;
   mrb_value mrbmacs;
-  char *fname = NULL;
-  char *init_path = NULL;
+  mrb_value arg_array;
+  int i;
   
   mrb = mrb_open();
 
@@ -138,19 +223,15 @@ main(int argc, char **argv)
     return EXIT_FAILURE;
   }
   mrbmacs_gtk_init(mrb);
-  
-  init_path = get_init_file_path(mrb);
-  if (argc > 1) {
-    fname = argv[1];
-  } 
+
+  arg_array = mrb_ary_new(mrb);
+  for (i = 1; i < argc; i++) {
+    mrb_ary_push(mrb, arg_array, mrb_str_new_cstr(mrb, argv[i]));
+  }
   mrbmacs_class = mrb_class_get_under(mrb, mrb_module_get(mrb, "Mrbmacs"), "Application");
   mrb_define_method(mrb, mrbmacs_class, "editloop", mrb_mrbmacs_editloop, MRB_ARGS_NONE());
-  mrbmacs = mrb_funcall(mrb, mrb_obj_value(mrbmacs_class), "new", 1, mrb_str_new_cstr(mrb, init_path));
+  mrbmacs = mrb_funcall(mrb, mrb_obj_value(mrbmacs_class), "new", 1, arg_array);
 
-  if (argc < 2) {
-    mrb_funcall(mrb, mrbmacs, "run", 0);
-  } else {
-    mrb_funcall(mrb, mrbmacs, "run", 1, mrb_str_new_cstr(mrb, fname));
-  }
+  mrb_funcall(mrb, mrbmacs, "run", 0);
   return 0;
 }

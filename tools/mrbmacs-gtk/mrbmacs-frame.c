@@ -45,6 +45,7 @@ scintilla_view_window_new(mrb_state *mrb, mrb_value self)
 
   mrb_funcall(mrb, view, "sci_set_caret_fore", 1, mrb_fixnum_value(0xffffff));
   mrb_funcall(mrb, view, "sci_set_caret_style", 1, mrb_fixnum_value(2));
+  mrb_funcall(mrb, view, "sci_set_mod_event_mask", 1, mrb_fixnum_value(SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT));
 
   return view;
 }
@@ -256,14 +257,11 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   DATA_PTR(self) = NULL;
   fdata->mainwin = mainwin;
 
-fprintf(stderr, "ss\n");
   /* edit window */
   /* initial buffer "*scratch*" */
   edit_class = mrb_class_get_under(mrb, mrbmacs_module, "EditWindow");
-fprintf(stderr,"2\n");
   edit_win = mrb_funcall(mrb, mrb_obj_value(mrb_class_get_under(mrb, mrbmacs_module, "EditWindow")),
     "new", 6, self, buffer, mrb_fixnum_value(0), mrb_fixnum_value(0), mrb_fixnum_value(40), mrb_fixnum_value(80+6));
-fprintf(stderr, "ss\n");
   view = scintilla_view_window_new(mrb, self);
   mrb_funcall(mrb, edit_win, "sci=", 1, view);
   fdata->edit_win = edit_win;
@@ -342,6 +340,7 @@ fprintf(stderr, "ss\n");
   gtk_box_pack_start(GTK_BOX(vbox), gtk_statusbar_new(), TRUE, TRUE, 0);
 
   gtk_widget_show_all(mainwin);
+//gtk_widget_hide(GTK_WIDGET(grid));
   gtk_widget_grab_focus((GtkWidget *)DATA_PTR(view));
 
   return self;
