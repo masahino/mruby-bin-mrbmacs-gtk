@@ -2,7 +2,7 @@
 module Mrbmacs
   class Frame
     include Scintilla
-    attr_accessor :view_win, :echo_win, :tk, :mainwin
+    attr_accessor :view_win, :echo_win, :tk, :mainwin, :edit_win
 
     def set_style_gtk
       @view_win.sci_marker_define(SC_MARKNUM_FOLDEROPEN, SC_MARK_BOXMINUS)
