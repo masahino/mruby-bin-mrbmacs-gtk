@@ -40,18 +40,6 @@ module Mrbmacs
     def modeline_refresh(app)
     end
 
-    def echo_gets(prompt, text = "", &block)
-      @view_win.sci_set_focus(false)
-      @echo_win.sci_set_focus(true)
-      Gtk::Widget.grab_focus(@echo_win.editor)
-      @echo_win.sci_clear_all
-      prefix_text = prompt + text
-      @echo_win.sci_add_text(prefix_text.length, prefix_text)
-      input_text = nil
-#      while true
-      #end
-    end
-
     def read_buffername(prompt)
       echo_gets(prompt)
     end
