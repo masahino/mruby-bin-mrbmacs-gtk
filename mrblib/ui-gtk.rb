@@ -51,7 +51,7 @@ module Mrbmacs
         false
       end
     end
-    
+
     def exit
     end
   end

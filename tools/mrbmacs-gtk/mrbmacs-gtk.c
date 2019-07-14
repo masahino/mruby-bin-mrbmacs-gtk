@@ -7,12 +7,14 @@
 #include "mruby/data.h"
 #include "mruby/array.h"
 #include "mruby/hash.h"
+#include "mruby/string.h"
 
 #include <locale.h>
 #include <gtk/gtk.h>
 #include <Scintilla.h>
 
 #include "mrbmacs-frame.h"
+#include "mrbmacs-cb.h"
 
 const char init_file_name[] = ".mrbmacsrc";
 mrb_state *mrb;
@@ -40,77 +42,6 @@ mrbmacs_io_read_cb(GIOChannel *source, GIOCondition condition, gpointer data)
     }
   }
   return TRUE;
-}
-
-static gboolean
-mrbmacs_keypress(GtkWidget *widget, GdkEventKey *event, gpointer data)
-{
-  mrb_value send_key;
-  send_key = mrb_funcall(mrb, *(mrb_value *)data, "key_press", 2, mrb_fixnum_value(event->state),
-    mrb_fixnum_value(event->keyval));
-  if (mrb_type(send_key) == MRB_TT_TRUE) {
-    return FALSE;
-  } else {
-    return TRUE;
-  }
-}
-
-static gboolean
-mrbmacs_sci_notify(GtkWidget *widget, gint n, SCNotification *notification, gpointer user_data)
-{
-  mrb_value ret, scn;
-
-  scn = mrb_hash_new(mrb);
-  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "code"), mrb_fixnum_value(notification->nmhdr.code));
-  // Sci_Position position
-  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "position"), mrb_fixnum_value(notification->position));
-  // int ch
-  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "ch"), mrb_fixnum_value(notification->ch));
-  // int modifiers
-  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "modifiers"), mrb_fixnum_value(notification->modifiers));
-  // int modificationType
-  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "modification_type"),
-    mrb_fixnum_value(notification->modificationType));
-  // const char *text
-  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "text"), mrb_str_new_cstr(mrb, notification->text));
-  // Sci_Position length
-  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "length"), mrb_fixnum_value(notification->length));
-  // Sci_Position linesAdded
-  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "lines_added"), mrb_fixnum_value(notification->linesAdded));
-  // int message
-  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "message"), mrb_fixnum_value(notification->message));
-  // uptr_t wParam
-  // sptr_t lParam
-  // Sci_Position line
-  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "line"), mrb_fixnum_value(notification->line));
-  // int foldLevelNow
-  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "fold_level_now"),
-    mrb_fixnum_value(notification->foldLevelNow));
-  // int foldLevelPrev
-  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "fold_level_prev"),
-    mrb_fixnum_value(notification->foldLevelPrev));
-  // int margin
-  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "margin"), mrb_fixnum_value(notification->margin));
-  // int listType
-  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "list_type"), mrb_fixnum_value(notification->listType));
-  // int x
-  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "x"), mrb_fixnum_value(notification->x));
-  // int y
-  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "y"), mrb_fixnum_value(notification->y));
-  // int token
-  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "token"), mrb_fixnum_value(notification->token));
-  // int annotationLinesAdded
-  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "annotation_lines_added"),
-    mrb_fixnum_value(notification->annotationLinesAdded));
-  // int updated
-  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "updated"), mrb_fixnum_value(notification->updated));
-  // listCompletionMethod
-  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "list_completion_method"),
-    mrb_fixnum_value(notification->listCompletionMethod));
-
-  ret = mrb_funcall(mrb, *(mrb_value *)user_data, "sci_notify", 1, scn);
-
-  return FALSE;
 }
 
 static gboolean
@@ -146,7 +77,7 @@ mrb_mrbmacs_editloop(mrb_state *mrb, mrb_value self)
   mrb_value frame_obj;
   mrb_value prefix_key;
   struct mrb_mrbmacs_frame_data *frame;
-  mrb_value io_events_hash, io_events_keys, read_io_a;
+  mrb_value read_io_a;
   int i;
 
   prefix_key = mrb_str_new_lit(mrb, "");
@@ -154,9 +85,9 @@ mrb_mrbmacs_editloop(mrb_state *mrb, mrb_value self)
   
   frame_obj = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@frame"));
   frame = (struct mrb_mrbmacs_frame_data *)DATA_PTR(frame_obj);
-  g_signal_connect(G_OBJECT((GtkWidget *)DATA_PTR(frame->view_win)),
+  g_signal_connect(G_OBJECT(frame->mainwin),
     "key-press-event", G_CALLBACK(mrbmacs_keypress), &self);
-  g_signal_connect(G_OBJECT((GtkWidget *)DATA_PTR(frame->view_win)),
+  g_signal_connect(G_OBJECT(frame->mainwin),
     "sci-notify", G_CALLBACK(mrbmacs_sci_notify), &self);
 
   // find button
@@ -173,7 +104,6 @@ mrb_mrbmacs_editloop(mrb_state *mrb, mrb_value self)
   for (i = 0; i < RARRAY_LEN(read_io_a); i++) {
     mrb_value fd = mrb_funcall(mrb, mrb_ary_ref(mrb, read_io_a, i), "fileno", 0);
     GIOChannel *channel = g_io_channel_unix_new(mrb_fixnum(fd));
-//    g_io_channel_set_flags(channel, G_IO_FLAG_NONBLOCK, NULL);
     g_io_add_watch(channel, G_IO_IN, mrbmacs_io_read_cb, &self);
   }
   gtk_main();
@@ -231,7 +161,6 @@ main(int argc, char **argv)
   mrbmacs_class = mrb_class_get_under(mrb, mrb_module_get(mrb, "Mrbmacs"), "Application");
   mrb_define_method(mrb, mrbmacs_class, "editloop", mrb_mrbmacs_editloop, MRB_ARGS_NONE());
   mrbmacs = mrb_funcall(mrb, mrb_obj_value(mrbmacs_class), "new", 1, arg_array);
-
   mrb_funcall(mrb, mrbmacs, "run", 0);
   return 0;
 }

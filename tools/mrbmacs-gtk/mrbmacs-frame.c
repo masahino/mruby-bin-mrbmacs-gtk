@@ -14,6 +14,7 @@
 #include <ScintillaWidget.h>
 
 #include "mrbmacs-frame.h"
+#include "mrbmacs-cb.h"
 
 static const struct mrb_data_type mrb_mrbmacs_frame_data_type = {
   "mrb_mrbmacs_frame_data", mrb_free,
@@ -82,26 +83,6 @@ scintilla_echo_window_new(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_mrbmacs_frame_add_buffer(mrb_state *mrb, mrb_value self)
-{
-  char *buffer_name;
-  GtkWidget *tab;
-  struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
-
-  mrb_get_args(mrb, "z", &buffer_name);
-  fprintf(stderr, "%s\n", buffer_name);
-  tab = gtk_button_new_with_label("hoge");
-
-  int i = gtk_notebook_append_page(GTK_NOTEBOOK(fdata->notebook), tab,
-    gtk_label_new("X"));
-  gtk_widget_show(tab);
-  fprintf(stderr, "tab num = %d\n", gtk_notebook_get_n_pages(GTK_NOTEBOOK(fdata->notebook)));
-  gtk_notebook_set_current_page(GTK_NOTEBOOK(fdata->notebook), 1);
-  fprintf(stderr, "%d\n", i);
-  return mrb_nil_value();
-}
-
-static mrb_value
 mrb_mrbmacs_frame_select_buffer(mrb_state *mrb, mrb_value self)
 {
   char *default_buffer_name;
@@ -163,7 +144,8 @@ mrb_mrbmacs_frame_set_buffer_name(mrb_state *mrb, mrb_value self)
 
   mrb_get_args(mrb, "z", &buffer_name);
   gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(fdata->notebook),
-    gtk_notebook_get_nth_page(GTK_NOTEBOOK(fdata->notebook), 0),
+    gtk_notebook_get_nth_page(GTK_NOTEBOOK(fdata->notebook), 
+      gtk_notebook_get_current_page(GTK_NOTEBOOK(fdata->notebook))),
     buffer_name);
   return self;
 }
@@ -325,11 +307,11 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
     "new", 6, self, buffer, mrb_fixnum_value(0), mrb_fixnum_value(0), mrb_fixnum_value(40), mrb_fixnum_value(80+6));
   view = scintilla_view_window_new(mrb, self);
   mrb_funcall(mrb, edit_win, "sci=", 1, view);
-  fdata->edit_win = edit_win;
+  fdata->edit_win_list = mrb_ary_new(mrb);
+  mrb_ary_push(mrb, fdata->edit_win_list, edit_win);
   mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@edit_win"), edit_win);
   fdata->view_win = view;
   mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@view_win"), view);
-
   gtk_notebook_set_show_border(GTK_NOTEBOOK(notebook), TRUE);
   gtk_widget_show(notebook);
   gtk_widget_show((GtkWidget *)DATA_PTR(view));
@@ -407,6 +389,39 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   return self;
 }
 
+static mrb_value
+mrb_mrbmacs_frame_add_new_tab(mrb_state *mrb, mrb_value self)
+{
+  mrb_value view;
+  struct RClass *mrbmacs_module, *edit_class;
+  mrb_value buffer, edit_win, buffer_name;
+  struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
+
+  mrb_get_args(mrb, "o", &buffer);
+  buffer_name = mrb_funcall(mrb, buffer, "name", 0);
+
+  view = scintilla_view_window_new(mrb, self);
+  gtk_widget_show((GtkWidget *)DATA_PTR(view));
+
+  int i = gtk_notebook_append_page(GTK_NOTEBOOK(fdata->notebook), (GtkWidget *)DATA_PTR(view),
+    gtk_label_new(mrb_str_to_cstr(mrb, buffer_name)));
+
+  gtk_notebook_set_current_page(GTK_NOTEBOOK(fdata->notebook), i);
+
+  /* edit window */
+  /* initial buffer "*scratch*" */
+  mrbmacs_module = mrb_module_get(mrb, "Mrbmacs");
+  edit_class = mrb_class_get_under(mrb, mrbmacs_module, "EditWindow");
+  edit_win = mrb_funcall(mrb, mrb_obj_value(mrb_class_get_under(mrb, mrbmacs_module, "EditWindow")),
+    "new", 6, self, buffer,
+    mrb_fixnum_value(0), mrb_fixnum_value(0), mrb_fixnum_value(40), mrb_fixnum_value(80+6));
+  mrb_funcall(mrb, edit_win, "sci=", 1, view);
+  mrb_ary_push(mrb, fdata->edit_win_list, edit_win);
+  mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@edit_win"), edit_win);
+  mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@view_win"), view);
+  return mrb_nil_value();
+}
+
 void
 mrbmacs_gtk_init(mrb_state *mrb)
 {
@@ -426,8 +441,8 @@ mrbmacs_gtk_init(mrb_state *mrb)
     mrb_mrbmacs_frame_set_buffer_name, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, frame, "select_buffer",
     mrb_mrbmacs_frame_select_buffer, MRB_ARGS_REQ(2));
-  mrb_define_method(mrb, frame, "add_buffer",
-    mrb_mrbmacs_frame_add_buffer, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, frame, "echo_gets",
     mrb_mrbmacs_frame_echo_gets, MRB_ARGS_ARG(1,2));
+  mrb_define_method(mrb, frame, "add_new_tab",
+    mrb_mrbmacs_frame_add_new_tab, MRB_ARGS_REQ(1));
 }
