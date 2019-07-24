@@ -4,11 +4,6 @@ module Mrbmacs
 
     def add_buffer_to_frame(buffer)
       @frame.add_new_tab(buffer)
-      @keymap.set_keymap(@frame.view_win)
-      @frame.set_default_style
-      @frame.edit_win.set_default_style(@theme)
-      @frame.set_style_gtk
-      buffer.mode.set_style(@frame.view_win, @theme)
     end
 
     def sci_notify(n)
