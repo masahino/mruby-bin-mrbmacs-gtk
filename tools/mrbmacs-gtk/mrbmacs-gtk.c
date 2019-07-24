@@ -85,9 +85,10 @@ mrb_mrbmacs_editloop(mrb_state *mrb, mrb_value self)
   
   frame_obj = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@frame"));
   frame = (struct mrb_mrbmacs_frame_data *)DATA_PTR(frame_obj);
+//  g_signal_connect(G_OBJECT((GtkWidget *)DATA_PTR(frame->view_win)),
   g_signal_connect(G_OBJECT(frame->mainwin),
     "key-press-event", G_CALLBACK(mrbmacs_keypress), &self);
-  g_signal_connect(G_OBJECT(frame->mainwin),
+  g_signal_connect(G_OBJECT((GtkWidget *)DATA_PTR(frame->view_win)),
     "sci-notify", G_CALLBACK(mrbmacs_sci_notify), &self);
 
   // find button
@@ -98,7 +99,12 @@ mrb_mrbmacs_editloop(mrb_state *mrb, mrb_value self)
   // search entry
   g_signal_connect(G_OBJECT(frame->search_entry),
     "search-changed", G_CALLBACK(mrbmacs_search_entry_changed), &self);
-  
+
+  // notebook
+  g_signal_connect(G_OBJECT(frame->notebook),
+//    "select-page", G_CALLBACK(mrbmacs_select_tab), &self);
+    "switch-page", G_CALLBACK(mrbmacs_select_tab), &self);
+
   // IO events
   read_io_a = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@readings"));
   for (i = 0; i < RARRAY_LEN(read_io_a); i++) {

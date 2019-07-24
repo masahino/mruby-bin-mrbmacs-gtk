@@ -13,14 +13,31 @@
 #include <gtk/gtk.h>
 #include <Scintilla.h>
 
+#include "mrbmacs-frame.h"
+
 extern mrb_state *mrb;
+
+gboolean
+//mrbmacs_select_tab(GtkWidget *widget, gboolean arg1, gpointer data)
+mrbmacs_select_tab(GtkWidget *notebook, GtkWidget *page, guint page_num, gpointer data)
+{
+  mrb_value app;
+  mrb_value frame_obj;
+  mrb_value buffername_obj;
+  gchar *buffername;
+
+  app = *(mrb_value *)data;
+  buffername = gtk_notebook_get_tab_label_text(notebook, page);
+  mrb_funcall(mrb, app, "switch_to_buffer", 1, mrb_str_new_cstr(mrb, buffername));
+  return FALSE;
+}
 
 gboolean
 mrbmacs_keypress(GtkWidget *widget, GdkEventKey *event, gpointer data)
 {
   mrb_value send_key;
   mrb_value app;
-  app = *(mrb_value*)data;
+  app = *(mrb_value *)data;
 
   send_key = mrb_funcall(mrb, app, "key_press", 2, mrb_fixnum_value(event->state),
     mrb_fixnum_value(event->keyval));
