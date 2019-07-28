@@ -51,7 +51,10 @@ module Mrbmacs
         false
       end
     end
-    
+
+    def echo_puts(str)
+    end
+
     def exit
     end
   end
