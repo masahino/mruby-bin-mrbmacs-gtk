@@ -340,8 +340,10 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
     "new", 6, self, buffer, mrb_fixnum_value(0), mrb_fixnum_value(0), mrb_fixnum_value(40), mrb_fixnum_value(80+6));
   view = scintilla_view_window_new(mrb, self);
   mrb_funcall(mrb, edit_win, "sci=", 1, view);
+
   fdata->edit_win_list = mrb_ary_new(mrb);
   mrb_ary_push(mrb, fdata->edit_win_list, edit_win);
+  mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@edit_win_list"), fdata->edit_win_list);
   mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@edit_win"), edit_win);
   fdata->view_win = view;
   mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@view_win"), view);
@@ -416,7 +418,7 @@ static mrb_value
 mrb_mrbmacs_frame_add_new_tab(mrb_state *mrb, mrb_value self)
 {
   struct RClass *mrbmacs_module, *edit_class;
-  mrb_value buffer, edit_win, buffer_name;
+  mrb_value buffer, edit_win, buffer_name, edit_win_list;
   GtkWidget *dummy;
   struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
 
@@ -438,7 +440,9 @@ mrb_mrbmacs_frame_add_new_tab(mrb_state *mrb, mrb_value self)
     "new", 6, self, buffer,
     mrb_fixnum_value(0), mrb_fixnum_value(0), mrb_fixnum_value(40), mrb_fixnum_value(80+6));
   mrb_funcall(mrb, edit_win, "sci=", 1, fdata->view_win);
-  mrb_ary_push(mrb, fdata->edit_win_list, edit_win);
+  edit_win_list = mrb_iv_get(mrb, self, mrb_intern_cstr(mrb, "@edit_win_list"));
+  mrb_funcall(mrb, edit_win_list, "push", 1, edit_win);
+//  mrb_ary_push(mrb, fdata->edit_win_list, edit_win);
   mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@edit_win"), edit_win);
   return mrb_nil_value();
 }
