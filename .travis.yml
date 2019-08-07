@@ -4,7 +4,7 @@ env:
     - TMPDIR=/tmp
 before_install:
   - sudo apt-get update
-  - sudo apt-get install gperf libtool-bin
+  - sudo apt-get install gperf libtool-bin libgtk-3-dev
 script:
   - export MRUBY_CONFIG=`pwd`/.travis_config.rb
   - git clone https://github.com/mruby/mruby.git
