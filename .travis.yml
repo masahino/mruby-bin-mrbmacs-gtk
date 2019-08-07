@@ -1,0 +1,12 @@
+sudo: required
+env:
+  global:
+    - TMPDIR=/tmp
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install gperf libtool-bin
+script:
+  - export MRUBY_CONFIG=`pwd`/.travis_config.rb
+  - git clone https://github.com/mruby/mruby.git
+  - (cd mruby; ./minirake)
+  - (cd mruby; ./minirake test)
