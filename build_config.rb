@@ -2,34 +2,24 @@ def gem_config(conf)
   conf.gembox 'default'
   conf.gem "#{MRUBY_ROOT}/mrbgems/mruby-eval"
   conf.gem "#{MRUBY_ROOT}/mrbgems/mruby-exit"
-  conf.gem :github => 'masahino/mruby-iconv', :branch => 'add_iconvlist' do |g|
-    g.linker.libraries.delete 'iconv'
+  conf.gem :github => 'iij/mruby-io'
+  conf.gem :github => 'iij/mruby-dir'
+  conf.gem :github => 'iij/mruby-pack'
+  conf.gem :github => 'ksss/mruby-file-stat'
+  conf.gem :github => 'gromnitsky/mruby-dir-glob'
+  conf.gem :github => 'mattn/mruby-iconv' do |g|
+    if RUBY_PLATFORM.include?('linux')
+      g.linker.libraries.delete 'iconv'
+    end
   end
-  conf.gem :github => 'take-cheeze/mruby-cfunc', :branch => 'fix_for_latest_2015_05_29' do |g|
-    g.download_libffi # download and link latest libffi
+
+  conf.gem :github => 'masahino/mruby-scintilla-base' do |g|
   end
-  conf.gem :github => 'ppibburr/mruby-named-constants'
-  conf.gem :github => 'ppibburr/mruby-allocate'
-  conf.gem :github => 'ppibburr/mruby-rubyffi-compat'
-  conf.gem :github => 'ppibburr/mruby-gobject-introspection'
-  conf.gem :github => 'ppibburr/mruby-girffi'
-  conf.gem :github => 'ppibburr/mruby-gtk3' do |g|
-    g.linker.flags << `pkg-config --libs gtk+-3.0 gmodule-2.0`.chomp
-  end
-  
-  conf.gem 'mrbgems/mruby-scintilla-base' do |g|
-#    g.cc.include_paths << "#{MRUBY_ROOT}/../scintilla/include"
-    g.cc.flags << '-DGTK -DSCI_LEXER'
-  end
-  conf.gem 'mrbgems/mruby-scintilla-gtk' do |g|
+
+  conf.gem :github => 'masahino/mruby-scintilla-gtk' do |g|
     g.download_scintilla
-#    g.cc.flags << `pkg-config --cflags gtk+-3.0`.chomp
-#    g.cc.flags << '-framework Cocoa'
-#    g.cc.flags << '-DGTK -DSCI_LEXER'
-#    g.cc.include_paths << "#{MRUBY_ROOT}/../scintilla/include"
-#    g.cc.include_paths << "#{MRUBY_ROOT}/../scintilla/src"
-#    g.cc.include_paths << "#{MRUBY_ROOT}/../scintilla/gtk"
-#    g.linker.flags_before_libraries << "#{MRUBY_ROOT}/../scintilla/bin/scintilla.a"
+    g.cc.flags << `pkg-config --cflags gtk+-3.0`.chomp
+    g.linker.flags_before_libraries << `pkg-config --libs gmodule-2.0 gtk+-3.0`.chomp
   end
   
   conf.gem :github => 'masahino/mruby-mrbmacs-base'
@@ -38,7 +28,7 @@ def gem_config(conf)
 end
 
 MRuby::Build.new do |conf|
-  toolchain :clang
+  toolchain :gcc
 
   conf.enable_debug
   conf.enable_cxx_abi
@@ -48,8 +38,8 @@ MRuby::Build.new do |conf|
 
   gem_config(conf)
   conf.gem :github => 'gromnitsky/mruby-dir-glob'
-  conf.gem :github => 'iij/mruby-regexp-pcre'
-  conf.gem :github => 'mattn/mruby-require'
+
+  conf.gem :github => 'iij/mruby-require'
 end
 
 MRuby::CrossBuild.new('x86_64-pc-linux-gnu') do |conf|
@@ -57,9 +47,7 @@ MRuby::CrossBuild.new('x86_64-pc-linux-gnu') do |conf|
 
   conf.enable_cxx_abi
 
-  conf.gem :github => 'iij/mruby-process'
   gem_config(conf)
-  conf.gem :github => 'iij/mruby-regexp-pcre'
   conf.gem :github => 'mattn/mruby-require'
 end
 
@@ -73,8 +61,6 @@ MRuby::CrossBuild.new('i386-pc-linux-gnu') do |conf|
   conf.enable_cxx_abi
 
   gem_config(conf)
-  conf.gem :github => 'gromnitsky/mruby-dir-glob'
-  conf.gem :github => 'iij/mruby-regexp-pcre'
   conf.gem :github => 'mattn/mruby-require'
 end
 
@@ -97,9 +83,7 @@ MRuby::CrossBuild.new('x86_64-apple-darwin14') do |conf|
     g.cc.flags << '-DHAVE_ICONVLIST'
   end
   gem_config(conf)
-  conf.gem :github => 'gromnitsky/mruby-dir-glob'
-  conf.gem :github => 'iij/mruby-regexp-pcre'
-  conf.gem :github => 'mattn/mruby-require'
+  conf.gem :github => 'iij/mruby-require'
 end
 
 #MRuby::CrossBuild.new('i386-apple-darwin14') do |conf|
@@ -135,9 +119,6 @@ MRuby::CrossBuild.new('i686-w64-mingw32') do |conf|
   conf.build_target     = 'i686-pc-linux-gnu'
   conf.host_target      = 'i686-w64-mingw32'
 
-  conf.gem :github => 'masahino/mruby-iconv', :branch => 'add_iconvlist' do |g|
-    g.cc.flags << '-DHAVE_ICONVLIST'
-  end
   conf.gem :github => 'iij/mruby-regexp-pcre' do |g|
     g.cc.flags << '-DPCRE_STATIC'
   end
@@ -161,9 +142,6 @@ MRuby::CrossBuild.new('x86_64-w64-mingw32') do |conf|
   conf.build_target     = 'x86-pc-linux-gnu'
   conf.host_target      = 'x86_64-w64-mingw32'
 
-  conf.gem :github => 'masahino/mruby-iconv', :branch => 'add_iconvlist' do |g|
-    g.cc.flags << '-DHAVE_ICONVLIST'
-  end
   conf.gem :github => 'iij/mruby-regexp-pcre' do |g|
     g.cc.flags << '-DPCRE_STATIC'
   end
@@ -173,4 +151,3 @@ MRuby::CrossBuild.new('x86_64-w64-mingw32') do |conf|
   conf.linker.libraries << 'iconv'
   conf.linker.libraries << 'stdc++'
 end
-

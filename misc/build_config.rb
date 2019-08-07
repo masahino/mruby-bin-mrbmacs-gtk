@@ -24,7 +24,6 @@ MRuby::Build.new do |conf|
   conf.gem :github => 'iij/mruby-io'
   conf.gem :github => 'iij/mruby-dir'
   conf.gem :github => 'iij/mruby-pack'
-  conf.gem :github => 'iij/mruby-regexp-pcre'
   conf.gem :github => 'ksss/mruby-file-stat'
   conf.gem :github => 'gromnitsky/mruby-dir-glob'
   conf.gem :github => 'mattn/mruby-iconv' do |g|
