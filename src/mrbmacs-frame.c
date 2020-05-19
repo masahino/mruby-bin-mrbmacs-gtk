@@ -424,7 +424,6 @@ mrb_mrbmacs_gtk_frame_init(mrb_state *mrb)
 {
   struct RClass *mrbmacs_module, *frame; 
 
-fprintf(stderr, "gem init\n");
   mrbmacs_module = mrb_module_get(mrb, "Mrbmacs");
   frame = mrb_class_get_under(mrb, mrbmacs_module, "Frame");
 
