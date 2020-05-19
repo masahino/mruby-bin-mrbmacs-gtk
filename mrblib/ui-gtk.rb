@@ -4,6 +4,12 @@ module Mrbmacs
     include Scintilla
     attr_accessor :view_win, :echo_win, :tk, :mainwin, :edit_win
 
+    def initialize(buffer)
+      frame_gtk_init(buffer)
+      @edit_win.set_sci_default
+      @edit_win.set_margin
+    end
+
     def set_style_gtk
       @view_win.sci_marker_define(SC_MARKNUM_FOLDEROPEN, SC_MARK_BOXMINUS)
       @view_win.sci_marker_set_fore(SC_MARKNUM_FOLDEROPEN, 0xffffff)

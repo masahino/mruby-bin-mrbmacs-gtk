@@ -28,7 +28,9 @@ MRuby::Build.new do |conf|
   conf.gem :github => 'fastly/mruby-optparse'
   conf.gem :github => 'gromnitsky/mruby-dir-glob'
   conf.gem :github => 'mattn/mruby-iconv' do |g|
-    g.linker.libraries.delete 'iconv'
+    if RUBY_PLATFORM.include?('linux')
+      g.linker.libraries.delete 'iconv'
+    end
   end
 
   conf.gem :github => 'masahino/mruby-scintilla-base' do |g|
@@ -103,5 +105,4 @@ MRuby::Build.new do |conf|
   # bintest
   conf.enable_bintest
   conf.enable_test
-  conf.gem :github => 'iij/mruby-require'
 end

@@ -16,6 +16,6 @@ struct mrb_mrbmacs_frame_data {
   GtkWidget *notebook;
 };
 
-void mrbmacs_gtk_init(mrb_state *mrb);
+void mrb_mrbmacs_gtk_frame_init(mrb_state *mrb);
 
 #endif /* MRBMACS_FRAME_H */
