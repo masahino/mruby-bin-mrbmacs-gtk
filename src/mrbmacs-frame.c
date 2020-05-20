@@ -15,42 +15,12 @@
 #include <ScintillaWidget.h>
 
 #include "mrbmacs-frame.h"
+#include "mrbmacs-window.h"
 #include "mrbmacs-cb.h"
 
 static const struct mrb_data_type mrb_mrbmacs_frame_data_type = {
   "mrb_mrbmacs_frame_data", mrb_free,
 };
-
-static mrb_value
-scintilla_view_window_new(mrb_state *mrb, mrb_value self)
-{
-  struct RClass *scintilla_gtk_class;
-  int font_width, font_height;
-  mrb_value view;
-
-  scintilla_gtk_class = mrb_class_get_under(
-    mrb,
-    mrb_module_get(mrb, "Scintilla"), "ScintillaGtk");
-
-  view = mrb_funcall(mrb, mrb_obj_value(scintilla_gtk_class), "new", 0);
-
-  mrb_funcall(mrb, view, "sci_style_set_font",
-    2, mrb_fixnum_value(STYLE_DEFAULT),
-    mrb_str_new_lit(mrb, "Monospace"));
-  mrb_funcall(mrb, view, "sci_style_set_size",
-    2, mrb_fixnum_value(STYLE_DEFAULT), mrb_fixnum_value(14));
-
-  font_width = mrb_int(mrb, mrb_funcall(mrb, view, "sci_text_width", 2,
-      mrb_fixnum_value(STYLE_DEFAULT), mrb_str_new_lit(mrb, "A")));
-  font_height = mrb_int(mrb, mrb_funcall(mrb, view, "sci_text_height", 1, mrb_fixnum_value(1)));
-  gtk_widget_set_size_request((GtkWidget *)DATA_PTR(view), font_width*(80+6), font_height*40);
-
-  mrb_funcall(mrb, view, "sci_set_caret_fore", 1, mrb_fixnum_value(0xffffff));
-  mrb_funcall(mrb, view, "sci_set_caret_style", 1, mrb_fixnum_value(2));
-  //  mrb_funcall(mrb, view, "sci_set_mod_event_mask", 1, mrb_fixnum_value(SC_MOD_INSERTTEXT | SC_MOD_DELETETEXT));
-  mrb_funcall(mrb, view, "sci_set_mouse_dwell_time", 1, mrb_fixnum_value(1000));
-  return view;
-}
 
 static mrb_value
 scintilla_echo_window_new(mrb_state *mrb, mrb_value self)
@@ -335,8 +305,9 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
 
   /* edit window */
   /* initial buffer "*scratch*" */
-  edit_class = mrb_class_get_under(mrb, mrbmacs_module, "EditWindow");
-  edit_win = mrb_funcall(mrb, mrb_obj_value(mrb_class_get_under(mrb, mrbmacs_module, "EditWindow")),
+  edit_class = mrb_class_get_under(mrb, mrbmacs_module, "EditWindowGtk");
+  edit_win = mrb_funcall(mrb, mrb_obj_value(mrb_class_get_under(mrb, 
+        mrbmacs_module, "EditWindowGtk")),
     "new", 6, self, buffer, mrb_fixnum_value(0), mrb_fixnum_value(0), mrb_fixnum_value(40), mrb_fixnum_value(80+6));
   view = scintilla_view_window_new(mrb, self);
   mrb_funcall(mrb, edit_win, "sci=", 1, view);
@@ -397,7 +368,8 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
 
   DATA_PTR(self) = fdata;
 
-  mrb_funcall(mrb, self, "set_default_style", 0);
+//  mrb_funcall(mrb, self, "set_sci_default", 1, view);
+//  mrb_funcall(mrb, self, "set_margin", 1, view);
   mrb_funcall(mrb, self, "set_style_gtk", 0);
   mrb_funcall(mrb, view, "sci_set_focus", 1, mrb_true_value());
   mrb_funcall(mrb, echo, "sci_set_focus", 1, mrb_false_value());
@@ -448,13 +420,14 @@ mrb_mrbmacs_frame_add_new_tab(mrb_state *mrb, mrb_value self)
 }
 
 void
-mrbmacs_gtk_init(mrb_state *mrb)
+mrb_mrbmacs_gtk_frame_init(mrb_state *mrb)
 {
   struct RClass *mrbmacs_module, *frame; 
 
   mrbmacs_module = mrb_module_get(mrb, "Mrbmacs");
   frame = mrb_class_get_under(mrb, mrbmacs_module, "Frame");
-  mrb_define_method(mrb, frame, "initialize",
+
+  mrb_define_method(mrb, frame, "frame_gtk_init",
     mrb_mrbmacs_frame_init, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, frame, "select_file",
     mrb_mrbmacs_frame_select_file, MRB_ARGS_REQ(2));

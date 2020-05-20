@@ -16,7 +16,6 @@
 #include "mrbmacs-frame.h"
 #include "mrbmacs-cb.h"
 
-const char init_file_name[] = ".mrbmacsrc";
 mrb_state *mrb;
 
 static gboolean
@@ -116,57 +115,21 @@ mrb_mrbmacs_editloop(mrb_state *mrb, mrb_value self)
   return self;
 }
 
-char *
-get_init_file_path(mrb_state *mrb)
+void
+mrb_mruby_bin_mrbmacs_gtk_gem_init(mrb_state *mrb_in)
 {
-  char *path = NULL;
-  char *home = getenv("HOME");
-  int len, n;
-  size_t size;
-  
-  if (home != NULL) {
-    len = snprintf(NULL, 0, "%s/%s", home, init_file_name);
-    if (len >= 0) {
-      size = len + 1;
-      path = (char *)mrb_malloc_simple(mrb, size);
-      if (path != NULL) {
-        n = snprintf(path, size, "%s/%s", home, init_file_name);
-        if (n != len) {
-          mrb_free(mrb, path);
-          path = NULL;
-        }
-      }
-    }
-  }
-  return path;
-}
-
-int
-main(int argc, char **argv)
-{
+  struct RClass *mrbmacs_module;
   struct RClass *mrbmacs_class;
-  mrb_value mrbmacs;
-  mrb_value arg_array;
-  int i;
-  
-  mrb = mrb_open();
 
-  setlocale(LC_CTYPE, "");
-
-  gtk_init(&argc, &argv);
-  if (mrb == NULL) {
-    fputs("Invalid mrb_state, exiting scimre\n", stderr);
-    return EXIT_FAILURE;
-  }
-  mrbmacs_gtk_init(mrb);
-
-  arg_array = mrb_ary_new(mrb);
-  for (i = 1; i < argc; i++) {
-    mrb_ary_push(mrb, arg_array, mrb_str_new_cstr(mrb, argv[i]));
-  }
+  mrb = mrb_in;
+  mrbmacs_module = mrb_module_get(mrb, "Mrbmacs");
   mrbmacs_class = mrb_class_get_under(mrb, mrb_module_get(mrb, "Mrbmacs"), "Application");
   mrb_define_method(mrb, mrbmacs_class, "editloop", mrb_mrbmacs_editloop, MRB_ARGS_NONE());
-  mrbmacs = mrb_funcall(mrb, mrb_obj_value(mrbmacs_class), "new", 1, arg_array);
-  mrb_funcall(mrb, mrbmacs, "run", 0);
-  return 0;
+
+  mrb_mrbmacs_gtk_frame_init(mrb);
+}
+
+void
+mrb_mruby_bin_mrbmacs_gtk_gem_final(mrb_state* mrb)
+{
 }

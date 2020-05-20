@@ -2,7 +2,6 @@ def gem_config(conf)
   conf.gembox 'default'
   conf.gem "#{MRUBY_ROOT}/mrbgems/mruby-eval"
   conf.gem "#{MRUBY_ROOT}/mrbgems/mruby-exit"
-  conf.gem :github => 'iij/mruby-io'
   conf.gem :github => 'iij/mruby-dir'
   conf.gem :github => 'iij/mruby-pack'
   conf.gem :github => 'ksss/mruby-file-stat'
