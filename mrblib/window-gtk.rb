@@ -10,9 +10,53 @@ module Mrbmacs
       @y1 = y1
       @width = width
       @height = height
+      @sci = new_view_win_gtk
+      setup_sci_default
+      set_style_gtk
+      set_margin
+      if @theme != nil
+        set_theme(@theme)
+      end
+    end
+
+    def setup_sci_default
+      @sci.sci_style_set_font Scintilla::STYLE_DEFAULT, "Monospace"
+      @sci.sci_style_set_size Scintilla::STYLE_DEFAULT, 14
+      font_width = @sci.sci_text_width Scintilla::STYLE_DEFAULT, "A"
+      font_height = @sci.sci_text_height 1
+#  gtk_widget_set_size_request((GtkWidget *)DATA_PTR(view), font_width*(80+6), font_height*40);
+
+      @sci.sci_set_caret_fore 0xffffff
+      @sci.sci_set_caret_style 2
+      @sci.sci_set_mouse_dwell_time 1000
+    end
+
+   def set_style_gtk
+      @sci.sci_marker_define(Scintilla::SC_MARKNUM_FOLDEROPEN, Scintilla::SC_MARK_BOXMINUS)
+      @sci.sci_marker_set_fore(Scintilla::SC_MARKNUM_FOLDEROPEN, 0xffffff)
+      @sci.sci_marker_set_back(Scintilla::SC_MARKNUM_FOLDEROPEN, 0x000000)
+      @sci.sci_marker_define(Scintilla::SC_MARKNUM_FOLDER, Scintilla::SC_MARK_BOXPLUS)
+      @sci.sci_marker_set_fore(Scintilla::SC_MARKNUM_FOLDER, 0xffffff)
+      @sci.sci_marker_set_back(Scintilla::SC_MARKNUM_FOLDER, 0x000000)
+      @sci.sci_marker_define(Scintilla::SC_MARKNUM_FOLDERSUB, Scintilla::SC_MARK_VLINE)
+      @sci.sci_marker_set_fore(Scintilla::SC_MARKNUM_FOLDERSUB, 0xffffff)
+      @sci.sci_marker_set_back(Scintilla::SC_MARKNUM_FOLDERSUB, 0x000000)
+      @sci.sci_marker_define(Scintilla::SC_MARKNUM_FOLDERTAIL, Scintilla::SC_MARK_LCORNER)
+      @sci.sci_marker_set_fore(Scintilla::SC_MARKNUM_FOLDERTAIL, 0xffffff)
+      @sci.sci_marker_set_back(Scintilla::SC_MARKNUM_FOLDERTAIL, 0x000000)
+      @sci.sci_marker_define(Scintilla::SC_MARKNUM_FOLDEREND, Scintilla::SC_MARK_BOXPLUSCONNECTED)
+      @sci.sci_marker_set_fore(Scintilla::SC_MARKNUM_FOLDEREND, 0xffffff)
+      @sci.sci_marker_set_back(Scintilla::SC_MARKNUM_FOLDEREND, 0x000000)
+      @sci.sci_marker_define(Scintilla::SC_MARKNUM_FOLDEROPENMID, Scintilla::SC_MARK_BOXMINUSCONNECTED)
+      @sci.sci_marker_set_fore(Scintilla::SC_MARKNUM_FOLDEROPENMID, 0xffffff)
+      @sci.sci_marker_set_back(Scintilla::SC_MARKNUM_FOLDEROPENMID, 0x000000)
+      @sci.sci_marker_define(Scintilla::SC_MARKNUM_FOLDERMIDTAIL, Scintilla::SC_MARK_TCORNER)
+      @sci.sci_marker_set_fore(Scintilla::SC_MARKNUM_FOLDERMIDTAIL, 0xffffff)
+      @sci.sci_marker_set_back(Scintilla::SC_MARKNUM_FOLDERMIDTAIL, 0x000000)
     end
 
     def set_theme(theme)
+      @theme = theme
       set_theme_base(theme)
       @sci.sci_set_fold_margin_colour(true, theme.background_color)
       @sci.sci_set_fold_margin_hicolour(true, theme.foreground_color)

@@ -1,5 +1,5 @@
 module Mrbmacs
-  class Application
+  class ApplicationGtk < Application
     include Scintilla
 
     def add_buffer_to_frame(buffer)
@@ -8,7 +8,6 @@ module Mrbmacs
 
     def sci_notify(n)
       win = @frame.view_win
-
       if @sci_handler[n['code']] != nil
         @sci_handler[n['code']].call(self, n)
       end

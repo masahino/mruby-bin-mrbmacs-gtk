@@ -61,7 +61,6 @@ mrb_mrbmacs_frame_sync_tab(mrb_state *mrb, mrb_value self)
   char *selected_buffer_name;
   const gchar *label_text;
   struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
-
   mrb_get_args(mrb, "z", &selected_buffer_name);
   label_text = gtk_notebook_get_tab_label_text(GTK_NOTEBOOK(fdata->notebook),
     gtk_notebook_get_nth_page(GTK_NOTEBOOK(fdata->notebook),
@@ -73,11 +72,15 @@ mrb_mrbmacs_frame_sync_tab(mrb_state *mrb, mrb_value self)
   for (i = 0; i < max_n; i++) {
     label_text = gtk_notebook_get_tab_label_text(GTK_NOTEBOOK(fdata->notebook),
       gtk_notebook_get_nth_page(GTK_NOTEBOOK(fdata->notebook), i));
+    if (label_text == NULL) {
+      continue;
+    }
     if (strcmp(selected_buffer_name, label_text) == 0) {
       gtk_notebook_set_current_page(GTK_NOTEBOOK(fdata->notebook), i);
       break;
     }
   }
+
   return mrb_nil_value();
 }
 
@@ -98,7 +101,7 @@ mrb_mrbmacs_frame_select_buffer(mrb_state *mrb, mrb_value self)
 
   mrb_get_args(mrb, "zA", &default_buffer_name, &buffer_list);
   dialog = gtk_dialog_new_with_buttons("select buffer",
-    GTK_WINDOW(gtk_widget_get_parent_window((GtkWidget *)DATA_PTR(fdata->view_win))),
+    GTK_WINDOW(fdata->mainwin),
     (GtkDialogFlags)(GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
     "_OK", GTK_RESPONSE_OK,
     "_Cancel", GTK_RESPONSE_CANCEL,
@@ -181,15 +184,14 @@ mrb_mrbmacs_frame_set_mode_text(mrb_state *mrb, mrb_value self)
 static mrb_value
 mrb_mrbmacs_frame_select_file(mrb_state *mrb, mrb_value self)
 {
-  GtkWidget *view_win, *dialog;
+  GtkWidget *dialog;
   char *title;
   char *path;
   char *filename = NULL;
+  struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
   
-  fprintf(stderr, "select_file\n");
-  view_win = (GtkWidget *)DATA_PTR(mrb_iv_get(mrb, self, mrb_intern_cstr(mrb, "@view_win")));
   mrb_get_args(mrb, "zz", &title, &path);
-  dialog = gtk_file_chooser_dialog_new(title, GTK_WINDOW(view_win),
+  dialog = gtk_file_chooser_dialog_new(title, GTK_WINDOW(fdata->mainwin),
     GTK_FILE_CHOOSER_ACTION_OPEN,
     "_Cancel", GTK_RESPONSE_CANCEL,
     "_Open", GTK_RESPONSE_ACCEPT, NULL);
@@ -215,7 +217,6 @@ static mrb_value
 mrb_mrbmacs_frame_echo_gets(mrb_state *mrb, mrb_value self)
 {
   GtkWidget *dialog;
-  GtkWidget *view_win;
   GtkWidget *entry, *label;
   GtkEntryCompletion *completion;
   GtkListStore *store;
@@ -226,10 +227,10 @@ mrb_mrbmacs_frame_echo_gets(mrb_state *mrb, mrb_value self)
   mrb_int argc;
   mrb_value comp_and_len, comp_list;
   char *prompt, *pretext;
+  struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
 
   argc = mrb_get_args(mrb, "z|z&", &prompt, &pretext, &block);
-  view_win = (GtkWidget *)DATA_PTR(mrb_iv_get(mrb, self, mrb_intern_cstr(mrb, "@view_win")));
-  dialog = gtk_dialog_new_with_buttons(prompt, GTK_WINDOW(view_win),
+  dialog = gtk_dialog_new_with_buttons(prompt, GTK_WINDOW(fdata->mainwin),
     GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
     "_Cancel", GTK_RESPONSE_CANCEL, "_OK", GTK_RESPONSE_OK, NULL);
   label = gtk_label_new(prompt);
@@ -267,14 +268,44 @@ mrb_mrbmacs_frame_echo_gets(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
+add_new_edit_win_with_tab(mrb_state *mrb, mrb_value frame, mrb_value buffer, GtkWidget *notebook)
+{
+  struct RClass *mrbmacs_module, *edit_class;
+  mrb_value view, edit_win;
+  mrb_value buffer_name;
+  GtkWidget *label;
+
+  buffer_name = mrb_funcall(mrb, buffer, "name", 0);
+
+  mrbmacs_module = mrb_module_get(mrb, "Mrbmacs");
+  /* edit window */
+  /* initial buffer "*scratch*" */
+  edit_class = mrb_class_get_under(mrb, mrbmacs_module, "EditWindowGtk");
+  edit_win = mrb_funcall(mrb, mrb_obj_value(mrb_class_get_under(mrb, 
+        mrbmacs_module, "EditWindowGtk")),
+    "new", 6, frame, buffer, mrb_fixnum_value(0), mrb_fixnum_value(0), mrb_fixnum_value(80+6), mrb_fixnum_value(40));
+  view = mrb_funcall(mrb, edit_win, "sci", 0);
+  gtk_widget_show((GtkWidget *)DATA_PTR(view));
+  int i = gtk_notebook_append_page(GTK_NOTEBOOK(notebook), (GtkWidget *)DATA_PTR(view), 
+    gtk_label_new(mrb_str_to_cstr(mrb, buffer_name)));
+//  int i = gtk_notebook_append_page(GTK_NOTEBOOK(fdata->notebook), (GtkWidget *)DATA_PTR(view),
+//        gtk_label_new(mrb_str_to_cstr(mrb, buffer_name)));
+//  gtk_widget_show((GtkWidget *)DATA_PTR(view));
+
+  gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), i);
+
+  return edit_win;
+}
+
+static mrb_value
 mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
 {
   GtkWidget *mainwin, *vbox, *mode, *search_entry, *replace_entry, *hbox1, *hbox2;
   GtkWidget *find_next_button, *find_prev_button;
   GtkWidget *replace_next_button, *replace_prev_button;
   GtkWidget *grid;
-  GtkWidget *notebook, *dummy;
-  struct RClass *mrbmacs_module, *edit_class;
+  GtkWidget *notebook;
+  struct RClass *mrbmacs_module;
 //  int font_width, font_height;
   mrb_value view, echo;
   mrb_value buffer, edit_win;
@@ -289,28 +320,36 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   mainwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
   gtk_container_add(GTK_CONTAINER(mainwin), vbox);
-  
-  notebook = gtk_notebook_new();
-  gtk_notebook_set_tab_pos(GTK_NOTEBOOK(notebook), GTK_POS_TOP);
-  gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
-  gtk_notebook_set_show_border(GTK_NOTEBOOK(notebook), TRUE);
-  gtk_box_pack_start(GTK_BOX(vbox), notebook, FALSE, FALSE, 0);
-  dummy = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), (GtkWidget *)dummy, NULL);
-  fdata->notebook = notebook;
 
   DATA_TYPE(self) = &mrb_mrbmacs_frame_data_type;
   DATA_PTR(self) = NULL;
   fdata->mainwin = mainwin;
 
+  notebook = gtk_notebook_new();
+  gtk_notebook_set_tab_pos(GTK_NOTEBOOK(notebook), GTK_POS_TOP);
+  gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
+  gtk_notebook_set_show_border(GTK_NOTEBOOK(notebook), TRUE);
+  gtk_box_pack_start(GTK_BOX(vbox), notebook, FALSE, FALSE, 0);
+  gtk_widget_show(GTK_WIDGET(notebook));
+//  dummy = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+//  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), (GtkWidget *)dummy, NULL);
+//  gtk_notebook_append_page(GTK_NOTEBOOK(notebook), (GtkWidget *)DATA_PTR(view), NULL);
+  fdata->notebook = notebook;
+
   /* edit window */
   /* initial buffer "*scratch*" */
-  edit_class = mrb_class_get_under(mrb, mrbmacs_module, "EditWindowGtk");
-  edit_win = mrb_funcall(mrb, mrb_obj_value(mrb_class_get_under(mrb, 
-        mrbmacs_module, "EditWindowGtk")),
-    "new", 6, self, buffer, mrb_fixnum_value(0), mrb_fixnum_value(0), mrb_fixnum_value(40), mrb_fixnum_value(80+6));
-  view = scintilla_view_window_new(mrb, self);
-  mrb_funcall(mrb, edit_win, "sci=", 1, view);
+  edit_win = add_new_edit_win_with_tab(mrb, self, buffer, notebook);
+//  edit_class = mrb_class_get_under(mrb, mrbmacs_module, "EditWindowGtk");
+//  edit_win = mrb_funcall(mrb, mrb_obj_value(mrb_class_get_under(mrb, 
+//        mrbmacs_module, "EditWindowGtk")),
+//    "new", 6, self, buffer, mrb_fixnum_value(0), mrb_fixnum_value(0), mrb_fixnum_value(80+6), mrb_fixnum_value(40));
+  g_signal_connect(G_OBJECT((GtkWidget *)DATA_PTR(view)),
+    "sci-notify", G_CALLBACK(mrbmacs_sci_notify), &self);
+  view = mrb_funcall(mrb, edit_win, "sci", 0);
+
+//  view = mrb_funcall(mrb, edit_win, "sci", 0);
+//  view = scintilla_view_window_new(mrb, self);
+//  mrb_funcall(mrb, edit_win, "sci=", 1, view);
 
   fdata->edit_win_list = mrb_ary_new(mrb);
   mrb_ary_push(mrb, fdata->edit_win_list, edit_win);
@@ -319,8 +358,8 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   fdata->view_win = view;
   mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@view_win"), view);
 
-  gtk_widget_show((GtkWidget *)DATA_PTR(view));
-  gtk_box_pack_start(GTK_BOX(vbox), (GtkWidget *)DATA_PTR(view), TRUE, TRUE, 0);
+ // gtk_widget_show((GtkWidget *)DATA_PTR(view));
+//  gtk_box_pack_start(GTK_BOX(vbox), (GtkWidget *)DATA_PTR(view), TRUE, TRUE, 0);
 
   mode = gtk_label_new("");
   gtk_label_set_justify(GTK_LABEL(mode), GTK_JUSTIFY_LEFT);
@@ -378,7 +417,6 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   gtk_box_pack_start(GTK_BOX(vbox), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL), FALSE, FALSE, 0);
       
   gtk_box_pack_start(GTK_BOX(vbox), gtk_statusbar_new(), TRUE, TRUE, 0);
-
   gtk_widget_show_all(mainwin);
 //gtk_widget_hide(GTK_WIDGET(grid));
   gtk_widget_grab_focus((GtkWidget *)DATA_PTR(view));
@@ -391,31 +429,40 @@ mrb_mrbmacs_frame_add_new_tab(mrb_state *mrb, mrb_value self)
 {
   struct RClass *mrbmacs_module, *edit_class;
   mrb_value buffer, edit_win, buffer_name, edit_win_list;
-  GtkWidget *dummy;
+  mrb_value view;
   struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
 
   mrb_get_args(mrb, "o", &buffer);
   buffer_name = mrb_funcall(mrb, buffer, "name", 0);
 
-  dummy = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-  int i = gtk_notebook_append_page(GTK_NOTEBOOK(fdata->notebook), (GtkWidget *)dummy,
-    gtk_label_new(mrb_str_to_cstr(mrb, buffer_name)));
-  gtk_widget_show(dummy);
-
-  gtk_notebook_set_current_page(GTK_NOTEBOOK(fdata->notebook), i);
+//  dummy = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+//  int i = gtk_notebook_append_page(GTK_NOTEBOOK(fdata->notebook), (GtkWidget *)dummy,
+//    gtk_label_new(mrb_str_to_cstr(mrb, buffer_name)));
+//  gtk_widget_show(dummy);
 
   /* edit window */
   /* initial buffer "*scratch*" */
-  mrbmacs_module = mrb_module_get(mrb, "Mrbmacs");
-  edit_class = mrb_class_get_under(mrb, mrbmacs_module, "EditWindow");
-  edit_win = mrb_funcall(mrb, mrb_obj_value(mrb_class_get_under(mrb, mrbmacs_module, "EditWindow")),
-    "new", 6, self, buffer,
-    mrb_fixnum_value(0), mrb_fixnum_value(0), mrb_fixnum_value(40), mrb_fixnum_value(80+6));
-  mrb_funcall(mrb, edit_win, "sci=", 1, fdata->view_win);
+  edit_win = add_new_edit_win_with_tab(mrb, self, buffer, fdata->notebook);
+//  mrbmacs_module = mrb_module_get(mrb, "Mrbmacs");
+//  edit_class = mrb_class_get_under(mrb, mrbmacs_module, "EditWindowGtk");
+//  edit_win = mrb_funcall(mrb, mrb_obj_value(mrb_class_get_under(mrb, mrbmacs_module, "EditWindowGtk")),
+//    "new", 6, self, buffer,
+//    mrb_fixnum_value(0), mrb_fixnum_value(0), mrb_fixnum_value(80+6), mrb_fixnum_value(40));
+  view = mrb_funcall(mrb, edit_win, "sci", 0);
+
+  //  view = scintilla_view_window_new(mrb, self);
+//  mrb_funcall(mrb, edit_win, "sci=", 1, view);
+  mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@view_win"), mrb_funcall(mrb, edit_win, "sci", 0));
+
   edit_win_list = mrb_iv_get(mrb, self, mrb_intern_cstr(mrb, "@edit_win_list"));
   mrb_funcall(mrb, edit_win_list, "push", 1, edit_win);
 //  mrb_ary_push(mrb, fdata->edit_win_list, edit_win);
   mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@edit_win"), edit_win);
+//  int i = gtk_notebook_append_page(GTK_NOTEBOOK(fdata->notebook), (GtkWidget *)DATA_PTR(view),
+//        gtk_label_new(mrb_str_to_cstr(mrb, buffer_name)));
+//  gtk_widget_show((GtkWidget *)DATA_PTR(view));
+
+//  gtk_notebook_set_current_page(GTK_NOTEBOOK(fdata->notebook), i);
   return mrb_nil_value();
 }
 
@@ -445,4 +492,6 @@ mrb_mrbmacs_gtk_frame_init(mrb_state *mrb)
     mrb_mrbmacs_frame_add_new_tab, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, frame, "sync_tab",
     mrb_mrbmacs_frame_sync_tab, MRB_ARGS_REQ(1));
+
+  mrb_mrbmacs_gtk_window_init(mrb);
 }

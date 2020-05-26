@@ -38,7 +38,7 @@ main(int argc, char **argv)
   for (i = 1; i < argc; i++) {
     mrb_ary_push(mrb, arg_array, mrb_str_new_cstr(mrb, argv[i]));
   }
-  mrbmacs_class = mrb_class_get_under(mrb, mrb_module_get(mrb, "Mrbmacs"), "Application");
+  mrbmacs_class = mrb_class_get_under(mrb, mrb_module_get(mrb, "Mrbmacs"), "ApplicationGtk");
   mrbmacs = mrb_funcall(mrb, mrb_obj_value(mrbmacs_class), "new", 1, arg_array);
   mrb_funcall(mrb, mrbmacs, "run", 0);
   return 0;

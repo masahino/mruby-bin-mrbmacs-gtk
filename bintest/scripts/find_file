@@ -1,0 +1,4 @@
+find_file 'bintest/scripts/test.input'
+puts @frame.edit_win.buffer.name
+puts @current_buffer.name
+save_buffers_kill_terminal()

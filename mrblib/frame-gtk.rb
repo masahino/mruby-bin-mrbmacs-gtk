@@ -6,8 +6,9 @@ module Mrbmacs
 
     def initialize(buffer)
       frame_gtk_init(buffer)
-      @edit_win.set_sci_default
-      @edit_win.set_margin
+#      set_style_gtk
+#      @edit_win.set_sci_default
+#      @edit_win.set_margin
     end
 
     def set_style_gtk
@@ -32,6 +33,13 @@ module Mrbmacs
       @view_win.sci_marker_define(SC_MARKNUM_FOLDERMIDTAIL, SC_MARK_TCORNER)
       @view_win.sci_marker_set_fore(SC_MARKNUM_FOLDERMIDTAIL, 0xffffff)
       @view_win.sci_marker_set_back(SC_MARKNUM_FOLDERMIDTAIL, 0x000000)
+    end
+
+    def set_theme(theme)
+      @theme = theme
+      @edit_win_list.each do |w|
+        w.set_theme(theme)
+      end
     end
 
     def send_key(key, win = nil)
