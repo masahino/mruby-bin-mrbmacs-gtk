@@ -22,12 +22,10 @@ gboolean
 mrbmacs_select_tab(GtkWidget *notebook, GtkWidget *page, guint page_num, gpointer data)
 {
   mrb_value app;
-  mrb_value frame_obj;
-  mrb_value buffername_obj;
-  gchar *buffername;
+  const gchar *buffername;
 
   app = *(mrb_value *)data;
-  buffername = gtk_notebook_get_tab_label_text(notebook, page);
+  buffername = gtk_notebook_get_tab_label_text(GTK_NOTEBOOK(notebook), page);
   mrb_funcall(mrb, app, "switch_to_buffer", 1, mrb_str_new_cstr(mrb, buffername));
   return FALSE;
 }
@@ -55,6 +53,7 @@ mrbmacs_sci_notify(GtkWidget *widget, gint n, SCNotification *notification, gpoi
 
   scn = mrb_hash_new(mrb);
   mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "code"), mrb_fixnum_value(notification->nmhdr.code));
+  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "id"), mrb_fixnum_value(notification->nmhdr.idFrom));
   // Sci_Position position
   mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "position"), mrb_fixnum_value(notification->position));
   // int ch
@@ -100,8 +99,10 @@ mrbmacs_sci_notify(GtkWidget *widget, gint n, SCNotification *notification, gpoi
   // listCompletionMethod
   mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "list_completion_method"),
     mrb_fixnum_value(notification->listCompletionMethod));
-
-  ret = mrb_funcall(mrb, *(mrb_value *)user_data, "sci_notify", 1, scn);
+  mrb_value app = mrb_gv_get(mrb, mrb_intern_lit(mrb, "$app"));
+  if (!mrb_nil_p(app)) {
+    ret = mrb_funcall(mrb, app, "sci_notify", 1, scn);
+  }
 
   return FALSE;
 }

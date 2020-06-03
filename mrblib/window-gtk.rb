@@ -3,6 +3,7 @@ module Mrbmacs
   class EditWindowGtk < EditWindow
     attr_accessor :sci, :frame
     attr_accessor :buffer, :x1, :y1, :width, :height
+
     def initialize(frame, buffer, x1, y1, width, height)
       @frame = frame
       @buffer = buffer
@@ -10,8 +11,10 @@ module Mrbmacs
       @y1 = y1
       @width = width
       @height = height
-      @sci = new_view_win_gtk
+      @sci = Scintilla::ScintillaGtk.new
+      set_callback
       setup_sci_default
+      compute_area
       set_style_gtk
       set_margin
       if @theme != nil
@@ -24,7 +27,6 @@ module Mrbmacs
       @sci.sci_style_set_size Scintilla::STYLE_DEFAULT, 14
       font_width = @sci.sci_text_width Scintilla::STYLE_DEFAULT, "A"
       font_height = @sci.sci_text_height 1
-#  gtk_widget_set_size_request((GtkWidget *)DATA_PTR(view), font_width*(80+6), font_height*40);
 
       @sci.sci_set_caret_fore 0xffffff
       @sci.sci_set_caret_style 2

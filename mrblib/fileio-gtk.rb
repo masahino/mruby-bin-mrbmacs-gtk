@@ -16,10 +16,6 @@ module Mrbmacs
         else
           @current_buffer.pos = @frame.view_win.sci_get_current_pos
           new_buffer = Buffer.new(filename)
-#          if @current_buffer.docpointer != nil
-#            @frame.view_win.sci_add_refdocument(@current_buffer.docpointer)
-#          end
-#          @frame.view_win.sci_set_docpointer(nil)
           add_new_buffer(new_buffer)
           @current_buffer = new_buffer
           add_buffer_to_frame(@current_buffer)
@@ -29,7 +25,6 @@ module Mrbmacs
           @keymap.set_keymap(@frame.view_win)
           @frame.view_win.sci_set_lexer_language(@current_buffer.mode.lexer)
           @current_buffer.mode.set_style(@frame.view_win, @theme)
-          @frame.view_win.sci_set_sel_back(true, 0xff0000)
           @frame.set_buffer_name(@current_buffer.name)
           @frame.edit_win.buffer = @current_buffer
           @frame.modeline(self)
