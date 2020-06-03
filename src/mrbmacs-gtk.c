@@ -87,8 +87,8 @@ mrb_mrbmacs_editloop(mrb_state *mrb, mrb_value self)
 //  g_signal_connect(G_OBJECT((GtkWidget *)DATA_PTR(frame->view_win)),
   g_signal_connect(G_OBJECT(frame->mainwin),
     "key-press-event", G_CALLBACK(mrbmacs_keypress), &self);
-  g_signal_connect(G_OBJECT((GtkWidget *)DATA_PTR(frame->view_win)),
-    "sci-notify", G_CALLBACK(mrbmacs_sci_notify), &self);
+//  g_signal_connect(G_OBJECT((GtkWidget *)DATA_PTR(frame->view_win)),
+//    "sci-notify", G_CALLBACK(mrbmacs_sci_notify), &self);
 
   // find button
   g_signal_connect(G_OBJECT(frame->find_next_button),
@@ -123,7 +123,9 @@ mrb_mruby_bin_mrbmacs_gtk_gem_init(mrb_state *mrb_in)
 
   mrb = mrb_in;
   mrbmacs_module = mrb_module_get(mrb, "Mrbmacs");
-  mrbmacs_class = mrb_class_get_under(mrb, mrb_module_get(mrb, "Mrbmacs"), "Application");
+  mrbmacs_class = mrb_define_class_under(mrb, mrbmacs_module, "ApplicationGtk",
+    mrb_class_get_under(mrb, mrbmacs_module, "Application"));
+
   mrb_define_method(mrb, mrbmacs_class, "editloop", mrb_mrbmacs_editloop, MRB_ARGS_NONE());
 
   mrb_mrbmacs_gtk_frame_init(mrb);

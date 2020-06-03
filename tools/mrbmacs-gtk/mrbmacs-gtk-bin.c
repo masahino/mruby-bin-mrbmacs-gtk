@@ -30,7 +30,7 @@ main(int argc, char **argv)
 
   gtk_init(&argc, &argv);
   if (mrb == NULL) {
-    fputs("Invalid mrb_state, exiting scimre\n", stderr);
+    fputs("Invalid mrb_state, exiting mrbmacs\n", stderr);
     return EXIT_FAILURE;
   }
 
@@ -38,8 +38,9 @@ main(int argc, char **argv)
   for (i = 1; i < argc; i++) {
     mrb_ary_push(mrb, arg_array, mrb_str_new_cstr(mrb, argv[i]));
   }
-  mrbmacs_class = mrb_class_get_under(mrb, mrb_module_get(mrb, "Mrbmacs"), "Application");
+  mrbmacs_class = mrb_class_get_under(mrb, mrb_module_get(mrb, "Mrbmacs"), "ApplicationGtk");
   mrbmacs = mrb_funcall(mrb, mrb_obj_value(mrbmacs_class), "new", 1, arg_array);
+  mrb_gv_set(mrb, mrb_intern_lit(mrb, "$app"), mrbmacs);
   mrb_funcall(mrb, mrbmacs, "run", 0);
   return 0;
 }

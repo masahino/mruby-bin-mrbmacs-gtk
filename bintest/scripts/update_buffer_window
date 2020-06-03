@@ -1,0 +1,7 @@
+switch_to_buffer("*Messages*")
+puts @current_buffer.name
+puts @frame.edit_win.buffer.name
+find_file 'bintest/sctipts/test.input'
+puts @current_buffer.name
+puts @frame.edit_win.buffer.name
+save_buffers_kill_terminal
