@@ -8,10 +8,7 @@ module Mrbmacs
 
     def sci_notify(n)
       win = @frame.view_win
-
-      if @sci_handler[n['code']] != nil
-        @sci_handler[n['code']].call(self, n)
-      end
+      call_sci_event(n)
     end
 
     def key_press(state, keyval)
