@@ -1,5 +1,5 @@
 module Mrbmacs
-  class Application
+  class ApplicationGtk < Application
     def isearch()
       win = @frame.view_win
       search_text = @frame.search_entry_get_text
