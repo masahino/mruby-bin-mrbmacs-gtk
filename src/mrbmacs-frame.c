@@ -85,6 +85,11 @@ mrb_mrbmacs_frame_sync_tab(mrb_state *mrb, mrb_value self)
   return mrb_nil_value();
 }
 
+static void mrbmacs_frame_select_buffer_activated(GtkWidget *widget, GtkTreePath *path, GtkTreeViewColumn *col, gpointer dialog)
+{
+    gtk_dialog_response(GTK_DIALOG(dialog), GTK_RESPONSE_OK);
+}
+
 static mrb_value
 mrb_mrbmacs_frame_select_buffer(mrb_state *mrb, mrb_value self)
 {
@@ -120,6 +125,7 @@ mrb_mrbmacs_frame_select_buffer(mrb_state *mrb, mrb_value self)
   gtk_tree_view_append_column(GTK_TREE_VIEW(listview),
     gtk_tree_view_column_new_with_attributes("buffer",
       gtk_cell_renderer_text_new (), "text", 0, NULL));
+  g_signal_connect(G_OBJECT(listview), "row-activated", G_CALLBACK(mrbmacs_frame_select_buffer_activated), dialog);
   gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), listview);
   gtk_widget_show_all(dialog);
 
