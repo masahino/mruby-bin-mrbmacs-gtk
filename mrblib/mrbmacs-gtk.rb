@@ -8,10 +8,14 @@ module Mrbmacs
     end
 
     def sci_notify(n)
+      if $DEBUG
+        $stderr.puts n['code']
+      end
       call_sci_event(n)
     end
 
     def key_press(state, keyval)
+      @frame.view_win.sci_set_empty_selection(@frame.view_win.sci_get_current_pos())
       send_key = true
       mod_str = ""
       if (state & (1<<2)) == (1<<2) # CONTROL_MASK
@@ -23,11 +27,11 @@ module Mrbmacs
       input_str = ""
       if keyval < 256
         input_str = keyval.chr
-        if keyval == 0x020 # GDK_KEY_Space
-          if mod_str == "C-"
-            input_str = "@"
-          end
-        end
+#        if keyval == 0x020 # GDK_KEY_Space
+#          if mod_str == "C-"
+#            input_str = "@"
+#          end
+#        end
       elsif keyval == 0xff09 # GDK_KEY_Tab
         input_str = "Tab"
       elsif keyval == 0xff0d # GDK_KEY_Return
@@ -38,11 +42,12 @@ module Mrbmacs
 #      if keyval < 256
       if input_str != ""
         key_str = key_str + input_str
-        command = nil
-        if @command_list.has_key?(key_str)
-          command = @command_list[key_str]
-        end
+        command = key_scan(key_str)
         if command != nil
+          if command.is_a?(Integer)
+            @frame.view_win.send_message(command, nil, nil)
+            @prefix_key = ""
+          end
           if command == "prefix"
             @prefix_key = key_str + " "
           else
@@ -56,6 +61,9 @@ module Mrbmacs
       elsif keyval == 0xff1b # GDK_KEY_Escape
         @prefix_key = "M-"
         send_key = false
+      end
+      if $DEBUG
+        $stderr.puts key_str
       end
       @frame.modeline(self)
       return send_key
