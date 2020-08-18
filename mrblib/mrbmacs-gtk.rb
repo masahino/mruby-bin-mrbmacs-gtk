@@ -45,7 +45,7 @@ module Mrbmacs
         command = key_scan(key_str)
         if command != nil
           if command.is_a?(Integer)
-            @frame.view_win.send_message(command, nil, nil)
+#            @frame.view_win.send_message(command, nil, nil)
             @prefix_key = ""
           end
           if command == "prefix"

@@ -23,21 +23,23 @@ mrbmacs_io_read_cb(GIOChannel *source, GIOCondition condition, gpointer data)
 {
   gint fd;
   mrb_value read_io_a, io_handler, cb;
+  mrb_value app = mrb_gv_get(mrb, mrb_intern_lit(mrb, "$app"));
   int i;
-
-  fd = g_io_channel_unix_get_fd(source);
-  read_io_a = mrb_iv_get(mrb, *(mrb_value *)data, mrb_intern_lit(mrb, "@readings"));
-  io_handler = mrb_iv_get(mrb, *(mrb_value *)data, mrb_intern_lit(mrb, "@io_handler"));
-  for (i = 0; i < RARRAY_LEN(read_io_a); i++) {
-    mrb_value io_obj = mrb_ary_ref(mrb, read_io_a, i);
-    mrb_value fd_obj = mrb_funcall(mrb, io_obj, "fileno", 0);
-    if (mrb_fixnum(fd_obj) == fd) {
-      mrb_value args[2];
-      args[0] = *(mrb_value *)data;
-      args[1] = io_obj;
-      cb = mrb_hash_get(mrb, io_handler, io_obj);
-      mrb_yield_argv(mrb, cb, 2, args);
-      break;
+  if (condition & G_IO_IN) {
+    fd = g_io_channel_unix_get_fd(source);
+    read_io_a = mrb_iv_get(mrb, app, mrb_intern_lit(mrb, "@readings"));
+    io_handler = mrb_iv_get(mrb, app, mrb_intern_lit(mrb, "@io_handler"));
+    for (i = 0; i < RARRAY_LEN(read_io_a); i++) {
+      mrb_value io_obj = mrb_ary_ref(mrb, read_io_a, i);
+      mrb_value fd_obj = mrb_funcall(mrb, io_obj, "fileno", 0);
+      if (mrb_fixnum(fd_obj) == fd) {
+        mrb_value args[2];
+        args[0] = app;
+        args[1] = io_obj;
+        cb = mrb_hash_get(mrb, io_handler, io_obj);
+        mrb_yield_argv(mrb, cb, 2, args);
+        break;
+      }
     }
   }
   return TRUE;
@@ -105,14 +107,32 @@ mrb_mrbmacs_editloop(mrb_state *mrb, mrb_value self)
     "switch-page", G_CALLBACK(mrbmacs_select_tab), &self);
 
   // IO events
-  read_io_a = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@readings"));
-  for (i = 0; i < RARRAY_LEN(read_io_a); i++) {
-    mrb_value fd = mrb_funcall(mrb, mrb_ary_ref(mrb, read_io_a, i), "fileno", 0);
-    GIOChannel *channel = g_io_channel_unix_new(mrb_fixnum(fd));
-    g_io_add_watch(channel, G_IO_IN, mrbmacs_io_read_cb, &self);
-  }
+//  read_io_a = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@readings"));
+//  for (i = 0; i < RARRAY_LEN(read_io_a); i++) {
+//    mrb_value fd = mrb_funcall(mrb, mrb_ary_ref(mrb, read_io_a, i), "fileno", 0);
+//    GIOChannel *channel = g_io_channel_unix_new(mrb_fixnum(fd));
+//    g_io_add_watch(channel, G_IO_IN, mrbmacs_io_read_cb, &self);
+//  }
   gtk_main();
   return self;
+}
+
+mrb_value
+mrb_mrbmacs_add_gtk_io_callback(mrb_state *mrb, mrb_value self)
+{
+  mrb_value io;
+  mrb_value fd;
+  GIOChannel *channel;
+  mrb_get_args(mrb, "o", &io);
+  fd = mrb_funcall(mrb, io, "fileno", 0);
+  channel = g_io_channel_unix_new(mrb_fixnum(fd));
+  g_io_add_watch(channel, G_IO_IN, mrbmacs_io_read_cb, &self);
+  return self;
+}
+
+mrb_value
+mrb_mrbmacs_del_gtk_io_callback(mrb_state *mrb, mrb_value self)
+{
 }
 
 void
@@ -127,6 +147,8 @@ mrb_mruby_bin_mrbmacs_gtk_gem_init(mrb_state *mrb_in)
     mrb_class_get_under(mrb, mrbmacs_module, "Application"));
 
   mrb_define_method(mrb, mrbmacs_class, "editloop", mrb_mrbmacs_editloop, MRB_ARGS_NONE());
+  mrb_define_method(mrb, mrbmacs_class, "add_gtk_io_callback", mrb_mrbmacs_add_gtk_io_callback, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, mrbmacs_class, "del_gtk_io_callback", mrb_mrbmacs_del_gtk_io_callback, MRB_ARGS_REQ(1));
 
   mrb_mrbmacs_gtk_frame_init(mrb);
 }
