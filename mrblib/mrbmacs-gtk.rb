@@ -15,7 +15,7 @@ module Mrbmacs
     end
 
     def key_press(state, keyval)
-      @frame.view_win.sci_set_empty_selection(@frame.view_win.sci_get_current_pos())
+#      @frame.view_win.sci_set_empty_selection(@frame.view_win.sci_get_current_pos())
       send_key = true
       mod_str = ""
       if (state & (1<<2)) == (1<<2) # CONTROL_MASK

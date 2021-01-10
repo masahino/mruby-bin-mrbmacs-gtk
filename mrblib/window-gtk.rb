@@ -29,7 +29,7 @@ module Mrbmacs
       font_height = @sci.sci_text_height 1
 
       @sci.sci_set_caret_fore 0xffffff
-      @sci.sci_set_caret_style 2
+      @sci.sci_set_caretstyle(Scintilla::CARETSTYLE_BLOCK_AFTER | Scintilla::CARETSTYLE_OVERSTRIKE_BLOCK | Scintilla::CARETSTYLE_BLOCK)
       @sci.sci_set_mouse_dwell_time 1000
     end
 
