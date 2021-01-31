@@ -42,6 +42,10 @@ module Mrbmacs
       end
     end
 
+    def select_buffer(default_buffer_name, buffer_list)
+      select_item("select buffer", default_buffer_name, buffer_list)
+    end
+
     def send_key(key, win = nil)
     end
 
