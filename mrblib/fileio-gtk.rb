@@ -1,7 +1,14 @@
 module Mrbmacs
   class ApplicationGtk < Application
     def read_file_name(prompt, directory)
-      @frame.select_file(prompt, directory)
+      @frame.select_file(prompt, directory, true, nil)
+    end
+
+    def read_save_file_name(prompt, directory, default_name = nil)
+      if default_name == ""
+        default_name = nil
+      end
+      @frame.select_file(prompt, directory, false, default_name)
     end
 
     def find_file(filename = nil)

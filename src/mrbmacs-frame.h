@@ -4,9 +4,11 @@
 struct mrb_mrbmacs_frame_data {
   GtkWidget *mainwin;
   GtkWidget *mode_win;
+  GtkWidget *search_bar;
   GtkWidget *search_entry;
   GtkWidget *find_next_button;
   GtkWidget *find_prev_button;
+  GtkWidget *replace_bar;
   GtkWidget *replace_entry;
   GtkWidget *replace_next_button;
   GtkWidget *replace_prev_button;

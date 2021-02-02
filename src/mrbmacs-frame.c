@@ -1,4 +1,3 @@
-
 #include <locale.h>
 #include <string.h>
 #include <gtk/gtk.h>
@@ -166,6 +165,7 @@ mrb_mrbmacs_frame_search_entry_get_text(mrb_state *mrb, mrb_value self)
   GtkWidget *isearch_entry;
   struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
   isearch_entry = fdata->search_entry;
+  gtk_search_bar_set_search_mode(GTK_SEARCH_BAR(fdata->search_bar), TRUE);
 #if GTK_CHECK_VERSION(3, 16, 0)
   gtk_entry_grab_focus_without_selecting(GTK_ENTRY(isearch_entry));
 #else
@@ -189,33 +189,34 @@ mrb_mrbmacs_frame_set_mode_text(mrb_state *mrb, mrb_value self)
   return self;
 }
 
-static void
-mrbmacs_frame_new_file_callback(GtkWidget *new_button, gpointer dialog)
-{
-  gtk_dialog_response(GTK_DIALOG(dialog), GTK_RESPONSE_OK);
-}
-
 static mrb_value
 mrb_mrbmacs_frame_select_file(mrb_state *mrb, mrb_value self)
 {
-  GtkWidget *dialog, *new_button;
+  GtkWidget *dialog;
+  mrb_bool is_open;
   char *title;
   char *path;
   char *filename = NULL;
+  mrb_value default_name;
+  char accept_button_name[6];
   struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
   gint ret;
   mrb_value ret_value;
-  
-  mrb_get_args(mrb, "zz", &title, &path);
+  mrb_get_args(mrb, "zzbo", &title, &path, &is_open, &default_name);
+  if (is_open == TRUE) {
+    strcpy(accept_button_name, "_Open");
+  } else {
+    strcpy(accept_button_name, "_Save");
+  }
   dialog = gtk_file_chooser_dialog_new(title, GTK_WINDOW(fdata->mainwin),
-    GTK_FILE_CHOOSER_ACTION_OPEN,
+    GTK_FILE_CHOOSER_ACTION_SAVE,
     "_Cancel", GTK_RESPONSE_CANCEL,
-    "_Open", GTK_RESPONSE_ACCEPT, NULL);
-  new_button = gtk_button_new_with_label("New");
-  g_signal_connect(G_OBJECT(new_button), "clicked", G_CALLBACK(mrbmacs_frame_new_file_callback),
-    (gpointer)dialog);
-  gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(dialog), new_button);
+    accept_button_name, GTK_RESPONSE_ACCEPT, NULL);
   gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), path);
+  if (mrb_nil_p(default_name)) {
+  } else {
+    gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(dialog), mrb_string_cstr(mrb, default_name));
+  }
   gtk_file_chooser_set_show_hidden(GTK_FILE_CHOOSER(dialog), TRUE);
 
   ret = gtk_dialog_run (GTK_DIALOG(dialog));
@@ -231,6 +232,7 @@ mrb_mrbmacs_frame_select_file(mrb_state *mrb, mrb_value self)
   gtk_widget_destroy(dialog);
   return ret_value;
 }
+
 
 static void
 mrbmacs_frame_echo_entry_callback(GtkEntry *entry, gpointer dialog)
@@ -318,43 +320,44 @@ add_new_edit_win_with_tab(mrb_state *mrb, mrb_value frame, mrb_value buffer, Gtk
 }
 
 static GtkWidget*
-create_search_box(struct mrb_mrbmacs_frame_data *fdata)
+create_search_bar(struct mrb_mrbmacs_frame_data *fdata, gboolean replace)
 {
-  GtkWidget *grid;
-  GtkWidget *search_entry, *replace_entry, *hbox1, *hbox2;
-  GtkWidget *find_next_button, *find_prev_button;
-  GtkWidget *replace_next_button, *replace_prev_button;
- // search box
-  grid = gtk_grid_new();
-  hbox1 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
-//  gtk_box_pack_start(GTK_BOX(vbox), grid, FALSE, FALSE, 2);
+  GtkWidget *search_bar;
+  GtkWidget *entry;
+  GtkWidget *next_button, *prev_button;
+  GtkWidget *box;
 
-  search_entry = gtk_search_entry_new();
-  gtk_widget_set_size_request(GTK_WIDGET(search_entry), 300, -1);
-  gtk_grid_attach(GTK_GRID(grid), search_entry, 0, 0, 1, 1);
-  find_next_button = gtk_button_new_with_label("Find Next");
-  gtk_grid_attach_next_to(GTK_GRID(grid), find_next_button, search_entry, GTK_POS_RIGHT, 1, 1);
-  find_prev_button = gtk_button_new_with_label("Find Prev");
-  gtk_grid_attach_next_to(GTK_GRID(grid), find_prev_button, find_next_button, GTK_POS_RIGHT, 1, 1);
-  fdata->search_entry = search_entry;
-  fdata->find_next_button = find_next_button;
-  fdata->find_prev_button = find_prev_button;
+  entry = gtk_search_entry_new();
+  if (replace == TRUE) {
+    gtk_entry_set_icon_from_icon_name(GTK_ENTRY(entry), GTK_ENTRY_ICON_PRIMARY,"edit-find-replace");
+  }
 
-  // replace box
-  hbox2 = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
-  replace_entry = gtk_search_entry_new();
-  gtk_widget_set_size_request(GTK_WIDGET(replace_entry), 240, -1);
-  gtk_entry_set_icon_from_icon_name(GTK_ENTRY(replace_entry), GTK_ENTRY_ICON_PRIMARY,"edit-find-replace");
-  gtk_grid_attach_next_to(GTK_GRID(grid), replace_entry, search_entry, GTK_POS_BOTTOM, 1, 1);
-  replace_next_button = gtk_button_new_with_label("Replace Next");
-  gtk_grid_attach_next_to(GTK_GRID(grid), replace_next_button, replace_entry, GTK_POS_RIGHT, 1, 1);
-  replace_prev_button = gtk_button_new_with_label("Replace Prev");
-  gtk_grid_attach_next_to(GTK_GRID(grid), replace_prev_button, replace_next_button, GTK_POS_RIGHT, 1, 1);
-  fdata->replace_entry = replace_entry;
-  fdata->replace_next_button = replace_next_button;
-  fdata->replace_prev_button = replace_prev_button;
+  box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+  gtk_widget_set_halign(box, GTK_ALIGN_START);
+  gtk_box_pack_start(GTK_BOX(box), entry, FALSE, FALSE, 0);
+  search_bar = gtk_search_bar_new();
+  gtk_search_bar_connect_entry(GTK_SEARCH_BAR(search_bar), GTK_ENTRY(entry));
+  gtk_search_bar_set_search_mode(GTK_SEARCH_BAR(search_bar), FALSE);
+  gtk_search_bar_set_show_close_button(GTK_SEARCH_BAR(search_bar), TRUE);
 
-  return grid;
+  next_button = gtk_button_new_from_icon_name("go-down-symbolic", GTK_ICON_SIZE_BUTTON);
+  gtk_box_pack_start(GTK_BOX(box), next_button, FALSE, FALSE, 0);
+  prev_button = gtk_button_new_from_icon_name("go-up-symbolic", GTK_ICON_SIZE_BUTTON);
+  gtk_box_pack_start(GTK_BOX(box), prev_button, FALSE, FALSE, 0);
+  gtk_container_add(GTK_CONTAINER(search_bar), box);
+
+  if (replace == FALSE) {
+    fdata->search_bar = search_bar;
+    fdata->search_entry = entry;
+    fdata->find_next_button = next_button;
+    fdata->find_prev_button = prev_button;
+  } else {
+    fdata->replace_bar = search_bar;
+    fdata->replace_entry = entry;
+    fdata->replace_next_button = next_button;
+    fdata->replace_prev_button = prev_button;
+  }
+  return search_bar;
 }
 
 static mrb_value
@@ -376,8 +379,10 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   (struct mrb_mrbmacs_frame_data *)mrb_malloc(mrb, sizeof(struct mrb_mrbmacs_frame_data));
 
   mainwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  gtk_widget_set_size_request(mainwin, -1, -1);
 
-  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+  vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+  gtk_container_set_border_width(GTK_CONTAINER(vbox), 0);
   gtk_container_add(GTK_CONTAINER(mainwin), vbox);
 
   DATA_TYPE(self) = &mrb_mrbmacs_frame_data_type;
@@ -388,8 +393,8 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   gtk_notebook_set_tab_pos(GTK_NOTEBOOK(notebook), GTK_POS_TOP);
   gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
   gtk_notebook_set_show_border(GTK_NOTEBOOK(notebook), TRUE);
-  gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, FALSE, 0);
-//  gtk_widget_show(GTK_WIDGET(notebook));
+  gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
+
   fdata->notebook = notebook;
 
   /* edit window */
@@ -406,18 +411,20 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   mode = gtk_label_new("");
   gtk_label_set_justify(GTK_LABEL(mode), GTK_JUSTIFY_LEFT);
   gtk_widget_set_halign(mode, GTK_ALIGN_START);
-  gtk_box_pack_start(GTK_BOX(vbox), mode, TRUE, TRUE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), mode, FALSE, FALSE, 0);
   mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@mode_win"), mrb_cptr_value(mrb, mode));
   fdata->mode_win = mode;
 
-  gtk_box_pack_start(GTK_BOX(vbox), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL), TRUE, TRUE, 0);
+//  gtk_box_pack_start(GTK_BOX(vbox), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL), FALSE, TRUE, 0);
 
   echo = scintilla_echo_window_new(mrb, self);
 
   mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@echo_win"), echo);
 
   // search & replace
-  gtk_box_pack_start(GTK_BOX(vbox),   create_search_box(fdata), FALSE, FALSE, 2);
+  gtk_box_pack_start(GTK_BOX(vbox), create_search_bar(fdata, FALSE), FALSE, FALSE, 0);
+  gtk_box_pack_start(GTK_BOX(vbox), create_search_bar(fdata, TRUE), FALSE, FALSE, 0);
+//  gtk_box_pack_start(GTK_BOX(vbox),   create_search_box(fdata), FALSE, FALSE, 0);
 
   DATA_PTR(self) = fdata;
 
@@ -427,7 +434,7 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   //set_default_style
 
   gtk_box_pack_start(GTK_BOX(vbox), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL), FALSE, FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(vbox), gtk_statusbar_new(), TRUE, TRUE, 0);
+  gtk_box_pack_end(GTK_BOX(vbox), gtk_statusbar_new(), FALSE, FALSE, 0);
   gtk_widget_show_all(mainwin);
 //gtk_widget_hide(GTK_WIDGET(grid));
   gtk_widget_grab_focus((GtkWidget *)DATA_PTR(view));
@@ -470,7 +477,7 @@ mrb_mrbmacs_gtk_frame_init(mrb_state *mrb)
   mrb_define_method(mrb, frame, "frame_gtk_init",
     mrb_mrbmacs_frame_init, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, frame, "select_file",
-    mrb_mrbmacs_frame_select_file, MRB_ARGS_REQ(2));
+    mrb_mrbmacs_frame_select_file, MRB_ARGS_REQ(4));
   mrb_define_method(mrb, frame, "set_mode_text",
     mrb_mrbmacs_frame_set_mode_text, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, frame, "search_entry_get_text",
