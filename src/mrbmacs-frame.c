@@ -18,6 +18,7 @@
 #include "mrbmacs-search-replace.h"
 #include "mrbmacs-select.h"
 #include "mrbmacs-tab.h"
+#include "mrbmacs-dialog.h"
 #include "mrbmacs-window.h"
 #include "mrbmacs-cb.h"
 
@@ -67,66 +68,6 @@ mrb_mrbmacs_frame_set_mode_text(mrb_state *mrb, mrb_value self)
   mode_win = fdata->mode_win;
   gtk_label_set_text(GTK_LABEL(mode_win), mode_str);
   return self;
-}
-
-static void
-mrbmacs_frame_echo_entry_callback(GtkEntry *entry, gpointer dialog)
-{
-  gtk_dialog_response(GTK_DIALOG(dialog), GTK_RESPONSE_OK);
-}
-
-static mrb_value
-mrb_mrbmacs_frame_echo_gets(mrb_state *mrb, mrb_value self)
-{
-  GtkWidget *dialog;
-  GtkWidget *entry, *label;
-  GtkEntryCompletion *completion;
-  GtkListStore *store;
-  GtkTreeIter iter;
-  gint response;
-  mrb_value ret;
-  mrb_value block;
-  mrb_int argc;
-  mrb_value comp_and_len, comp_list;
-  char *prompt, *pretext;
-  struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
-
-  argc = mrb_get_args(mrb, "z|z&", &prompt, &pretext, &block);
-  dialog = gtk_dialog_new_with_buttons(prompt, GTK_WINDOW(fdata->mainwin),
-    GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-    "_Cancel", GTK_RESPONSE_CANCEL, "_OK", GTK_RESPONSE_OK, NULL);
-  label = gtk_label_new(prompt);
-  gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),label);
-  entry = gtk_entry_new();
-  if (argc > 1) {
-    gtk_entry_set_text(GTK_ENTRY(entry), pretext);
-  }
-  completion = gtk_entry_completion_new();
-  store = gtk_list_store_new(1, G_TYPE_STRING);
-  gtk_entry_completion_set_model(completion, GTK_TREE_MODEL(store));
-  gtk_entry_completion_set_text_column(completion, 0);
-  if (mrb_type(block) == MRB_TT_PROC) {
-    comp_and_len = mrb_yield(mrb, block, mrb_str_new_cstr(mrb, ""));
-    comp_list = mrb_funcall(mrb, mrb_ary_ref(mrb, comp_and_len, 0), "split", 1, mrb_str_new_cstr(mrb, " "));
-    for (int i = 0; i < RARRAY_LEN(comp_list); i++) {
-      gtk_list_store_append(store, &iter);
-      gtk_list_store_set(store, &iter, 0, mrb_str_to_cstr(mrb, mrb_ary_ref(mrb, comp_list, i)), -1);
-    }
-  }
-  gtk_entry_set_completion(GTK_ENTRY(entry), completion);
-  g_signal_connect(G_OBJECT(entry), "activate", G_CALLBACK(mrbmacs_frame_echo_entry_callback),
-      (gpointer)dialog);
-  gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), entry);
-
-  gtk_widget_show_all(dialog);
-  response = gtk_dialog_run(GTK_DIALOG(dialog));
-  if (response == GTK_RESPONSE_OK) {
-    ret = mrb_str_new_cstr(mrb, gtk_entry_get_text(GTK_ENTRY(entry)));
-  } else {
-    ret = mrb_nil_value();
-  }
-  gtk_widget_destroy(dialog);
-  return ret;
 }
 
 
@@ -273,11 +214,10 @@ mrb_mrbmacs_gtk_frame_init(mrb_state *mrb)
     mrb_mrbmacs_frame_init, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, frame, "set_mode_text",
     mrb_mrbmacs_frame_set_mode_text, MRB_ARGS_REQ(1));
-  mrb_define_method(mrb, frame, "echo_gets",
-    mrb_mrbmacs_frame_echo_gets, MRB_ARGS_ARG(1,2));
 
   mrb_mrbmacs_gtk_frame_search_init(mrb);
   mrb_mrbmacs_gtk_frame_select_init(mrb);
   mrb_mrbmacs_gtk_frame_tab_init(mrb);
+  mrb_mrbmacs_gtk_frame_dialog_init(mrb);
   mrb_mrbmacs_gtk_window_init(mrb);
 }
