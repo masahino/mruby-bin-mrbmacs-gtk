@@ -15,6 +15,9 @@
 #include <ScintillaWidget.h>
 
 #include "mrbmacs-frame.h"
+#include "mrbmacs-search-replace.h"
+#include "mrbmacs-select.h"
+#include "mrbmacs-tab.h"
 #include "mrbmacs-window.h"
 #include "mrbmacs-cb.h"
 
@@ -54,129 +57,6 @@ scintilla_echo_window_new(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_mrbmacs_frame_sync_tab(mrb_state *mrb, mrb_value self)
-{
-  int i;
-  gint max_n;
-  char *selected_buffer_name;
-  const gchar *label_text;
-  struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
-
-  mrb_get_args(mrb, "z", &selected_buffer_name);
-  label_text = gtk_notebook_get_tab_label_text(GTK_NOTEBOOK(fdata->notebook),
-    gtk_notebook_get_nth_page(GTK_NOTEBOOK(fdata->notebook),
-      gtk_notebook_get_current_page(GTK_NOTEBOOK(fdata->notebook))));
-  if (strcmp(selected_buffer_name, label_text) == 0) {
-    return mrb_nil_value();
-  }
-  max_n = gtk_notebook_get_n_pages(GTK_NOTEBOOK(fdata->notebook));
-  for (i = 0; i < max_n; i++) {
-    label_text = gtk_notebook_get_tab_label_text(GTK_NOTEBOOK(fdata->notebook),
-      gtk_notebook_get_nth_page(GTK_NOTEBOOK(fdata->notebook), i));
-    if (label_text == NULL) {
-      continue;
-    }
-    if (strcmp(selected_buffer_name, label_text) == 0) {
-      gtk_notebook_set_current_page(GTK_NOTEBOOK(fdata->notebook), i);
-      break;
-    }
-  }
-
-  return mrb_nil_value();
-}
-
-static void mrbmacs_frame_select_item_activated(GtkWidget *widget, GtkTreePath *path, GtkTreeViewColumn *col, gpointer dialog)
-{
-    gtk_dialog_response(GTK_DIALOG(dialog), GTK_RESPONSE_OK);
-}
-
-static mrb_value
-mrb_mrbmacs_frame_select_item(mrb_state *mrb, mrb_value self)
-{
-  char *title_str, *default_item_name;
-  gchar *row_string;
-  mrb_value item_name;
-  mrb_value item_list;
-  GtkWidget *dialog;
-  GtkWidget *listview;
-  GtkListStore *store;
-  GtkTreeIter iter;
-  GtkTreeSelection *selection;
-  GtkTreeModel *model;
-  struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
-
-  mrb_get_args(mrb, "zzA", &title_str, &default_item_name, &item_list);
-  dialog = gtk_dialog_new_with_buttons(title_str,
-    GTK_WINDOW(fdata->mainwin),
-    (GtkDialogFlags)(GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT),
-    "_OK", GTK_RESPONSE_OK,
-    "_Cancel", GTK_RESPONSE_CANCEL,
-    NULL);
-  listview = gtk_tree_view_new();
-  store = gtk_list_store_new(1, G_TYPE_STRING);
-  gtk_tree_view_set_model(GTK_TREE_VIEW(listview),
-    GTK_TREE_MODEL(store));
-  for (int i = 0; i < RARRAY_LEN(item_list); i++) {
-    mrb_value b = mrb_ary_ref(mrb, item_list, i);;
-    gtk_list_store_append(store, &iter);
-    gtk_list_store_set(store, &iter,
-      0, mrb_str_to_cstr(mrb, b), -1);
-  }
-  gtk_tree_view_append_column(GTK_TREE_VIEW(listview),
-    gtk_tree_view_column_new_with_attributes(title_str,
-      gtk_cell_renderer_text_new (), "text", 0, NULL));
-  g_signal_connect(G_OBJECT(listview), "row-activated", G_CALLBACK(mrbmacs_frame_select_item_activated), dialog);
-  gtk_container_add(GTK_CONTAINER(gtk_dialog_get_content_area(GTK_DIALOG(dialog))), listview);
-  gtk_widget_show_all(dialog);
-
-  gint result = gtk_dialog_run(GTK_DIALOG(dialog));
-  switch(result) {
-    case GTK_RESPONSE_OK:
-    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(listview));
-    gtk_tree_selection_get_selected(selection, &model, &iter);
-    gtk_tree_model_get(model, &iter, 0, &row_string, -1);
-    item_name = mrb_str_new_cstr(mrb, row_string);
-    break;
-    case GTK_RESPONSE_CANCEL:
-    default:
-    item_name = mrb_str_new_cstr(mrb, default_item_name);
-  }
-  gtk_widget_destroy(dialog);
-  return item_name;
-}
-
-static mrb_value
-mrb_mrbmacs_frame_set_buffer_name(mrb_state *mrb, mrb_value self)
-{
-  struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
-  char *buffer_name;
-
-  mrb_get_args(mrb, "z", &buffer_name);
-  gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(fdata->notebook),
-    gtk_notebook_get_nth_page(GTK_NOTEBOOK(fdata->notebook),
-      gtk_notebook_get_current_page(GTK_NOTEBOOK(fdata->notebook))),
-    buffer_name);
-  return self;
-}
-
-static mrb_value
-mrb_mrbmacs_frame_search_entry_get_text(mrb_state *mrb, mrb_value self)
-{
-  GtkWidget *isearch_entry;
-  struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
-  isearch_entry = fdata->search_entry;
-  gtk_search_bar_set_search_mode(GTK_SEARCH_BAR(fdata->search_bar), TRUE);
-#if GTK_CHECK_VERSION(3, 16, 0)
-  gtk_entry_grab_focus_without_selecting(GTK_ENTRY(isearch_entry));
-#else
-  gtk_widget_grab_focus(GTK_WIDGET(isearch_entry));
-#endif /* GTK_CHECK_VERSION(3, 16, 0) */
-
-  return mrb_str_new_cstr(mrb,
-    gtk_entry_get_text(GTK_ENTRY(isearch_entry)));
-}
-
-static mrb_value
 mrb_mrbmacs_frame_set_mode_text(mrb_state *mrb, mrb_value self)
 {
   GtkWidget *mode_win;
@@ -188,51 +68,6 @@ mrb_mrbmacs_frame_set_mode_text(mrb_state *mrb, mrb_value self)
   gtk_label_set_text(GTK_LABEL(mode_win), mode_str);
   return self;
 }
-
-static mrb_value
-mrb_mrbmacs_frame_select_file(mrb_state *mrb, mrb_value self)
-{
-  GtkWidget *dialog;
-  mrb_bool is_open;
-  char *title;
-  char *path;
-  char *filename = NULL;
-  mrb_value default_name;
-  char accept_button_name[6];
-  struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
-  gint ret;
-  mrb_value ret_value;
-  mrb_get_args(mrb, "zzbo", &title, &path, &is_open, &default_name);
-  if (is_open == TRUE) {
-    strcpy(accept_button_name, "_Open");
-  } else {
-    strcpy(accept_button_name, "_Save");
-  }
-  dialog = gtk_file_chooser_dialog_new(title, GTK_WINDOW(fdata->mainwin),
-    GTK_FILE_CHOOSER_ACTION_SAVE,
-    "_Cancel", GTK_RESPONSE_CANCEL,
-    accept_button_name, GTK_RESPONSE_ACCEPT, NULL);
-  gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), path);
-  if (mrb_nil_p(default_name)) {
-  } else {
-    gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(dialog), mrb_string_cstr(mrb, default_name));
-  }
-  gtk_file_chooser_set_show_hidden(GTK_FILE_CHOOSER(dialog), TRUE);
-
-  ret = gtk_dialog_run (GTK_DIALOG(dialog));
-
-  if (ret == GTK_RESPONSE_OK) {
-    ret_value = mrb_str_new_cstr(mrb, path);
-    ret_value = mrb_str_cat_lit(mrb, ret_value, "/Untitled");
-  }
-  if (ret == GTK_RESPONSE_ACCEPT) {
-    filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-    ret_value = mrb_str_new_cstr(mrb, filename);
-  }
-  gtk_widget_destroy(dialog);
-  return ret_value;
-}
-
 
 static void
 mrbmacs_frame_echo_entry_callback(GtkEntry *entry, gpointer dialog)
@@ -294,30 +129,6 @@ mrb_mrbmacs_frame_echo_gets(mrb_state *mrb, mrb_value self)
   return ret;
 }
 
-static mrb_value
-add_new_edit_win_with_tab(mrb_state *mrb, mrb_value frame, mrb_value buffer, GtkWidget *notebook)
-{
-  mrb_value view, edit_win;
-  mrb_value buffer_name;
-  int i;
-
-  buffer_name = mrb_funcall(mrb, buffer, "name", 0);
-
-  /* edit window */
-  /* initial buffer "*scratch*" */
-  edit_win = mrb_funcall(mrb,
-    mrb_obj_value(mrb_class_get_under(mrb, mrb_module_get(mrb, "Mrbmacs"), "EditWindowGtk")),
-    "new", 6, frame, buffer, mrb_fixnum_value(0), mrb_fixnum_value(0),
-    mrb_fixnum_value(80+6), mrb_fixnum_value(40));
-  view = mrb_funcall(mrb, edit_win, "sci", 0);
-  gtk_widget_show((GtkWidget *)DATA_PTR(view));
-  i = gtk_notebook_append_page(GTK_NOTEBOOK(notebook), (GtkWidget *)DATA_PTR(view),
-    gtk_label_new(mrb_str_to_cstr(mrb, buffer_name)));
-
-  gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), i);
-
-  return edit_win;
-}
 
 static GtkWidget*
 create_search_bar(struct mrb_mrbmacs_frame_data *fdata, gboolean replace)
@@ -336,6 +147,7 @@ create_search_bar(struct mrb_mrbmacs_frame_data *fdata, gboolean replace)
   gtk_widget_set_halign(box, GTK_ALIGN_START);
   gtk_box_pack_start(GTK_BOX(box), entry, FALSE, FALSE, 0);
   search_bar = gtk_search_bar_new();
+  gtk_container_set_border_width(GTK_CONTAINER(search_bar), 0);
   gtk_search_bar_connect_entry(GTK_SEARCH_BAR(search_bar), GTK_ENTRY(entry));
   gtk_search_bar_set_search_mode(GTK_SEARCH_BAR(search_bar), FALSE);
   gtk_search_bar_set_show_close_button(GTK_SEARCH_BAR(search_bar), TRUE);
@@ -379,7 +191,8 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   (struct mrb_mrbmacs_frame_data *)mrb_malloc(mrb, sizeof(struct mrb_mrbmacs_frame_data));
 
   mainwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-  gtk_widget_set_size_request(mainwin, -1, -1);
+//  gtk_widget_set_size_request(mainwin, -1, -1);
+  gtk_window_set_default_size(GTK_WINDOW(mainwin), 738, 764);
 
   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
   gtk_container_set_border_width(GTK_CONTAINER(vbox), 0);
@@ -439,32 +252,14 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
 //gtk_widget_hide(GTK_WIDGET(grid));
   gtk_widget_grab_focus((GtkWidget *)DATA_PTR(view));
 
+  /*
+  gint w_w, w_h;
+  gtk_window_get_size(GTK_WINDOW(mainwin), &w_w, &w_h);
+  fprintf(stderr, "w = %d, h = %d\n", w_w, w_h);
+  */
   return self;
 }
 
-static mrb_value
-mrb_mrbmacs_frame_add_new_tab(mrb_state *mrb, mrb_value self)
-{
-  mrb_value buffer, edit_win, buffer_name, edit_win_list;
-  mrb_value view;
-  struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
-
-  mrb_get_args(mrb, "o", &buffer);
-  buffer_name = mrb_funcall(mrb, buffer, "name", 0);
-
-  /* edit window */
-  /* initial buffer "*scratch*" */
-  edit_win = add_new_edit_win_with_tab(mrb, self, buffer, fdata->notebook);
-  view = mrb_funcall(mrb, edit_win, "sci", 0);
-
-  mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@view_win"), mrb_funcall(mrb, edit_win, "sci", 0));
-
-  edit_win_list = mrb_iv_get(mrb, self, mrb_intern_cstr(mrb, "@edit_win_list"));
-  mrb_funcall(mrb, edit_win_list, "push", 1, edit_win);
-  mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@edit_win"), edit_win);
-
-  return mrb_nil_value();
-}
 
 void
 mrb_mrbmacs_gtk_frame_init(mrb_state *mrb)
@@ -476,22 +271,13 @@ mrb_mrbmacs_gtk_frame_init(mrb_state *mrb)
 
   mrb_define_method(mrb, frame, "frame_gtk_init",
     mrb_mrbmacs_frame_init, MRB_ARGS_REQ(1));
-  mrb_define_method(mrb, frame, "select_file",
-    mrb_mrbmacs_frame_select_file, MRB_ARGS_REQ(4));
   mrb_define_method(mrb, frame, "set_mode_text",
     mrb_mrbmacs_frame_set_mode_text, MRB_ARGS_REQ(1));
-  mrb_define_method(mrb, frame, "search_entry_get_text",
-    mrb_mrbmacs_frame_search_entry_get_text, MRB_ARGS_NONE());
-  mrb_define_method(mrb, frame, "set_buffer_name",
-    mrb_mrbmacs_frame_set_buffer_name, MRB_ARGS_REQ(1));
-  mrb_define_method(mrb, frame, "select_item",
-    mrb_mrbmacs_frame_select_item, MRB_ARGS_REQ(3));
   mrb_define_method(mrb, frame, "echo_gets",
     mrb_mrbmacs_frame_echo_gets, MRB_ARGS_ARG(1,2));
-  mrb_define_method(mrb, frame, "add_new_tab",
-    mrb_mrbmacs_frame_add_new_tab, MRB_ARGS_REQ(1));
-  mrb_define_method(mrb, frame, "sync_tab",
-    mrb_mrbmacs_frame_sync_tab, MRB_ARGS_REQ(1));
 
+  mrb_mrbmacs_gtk_frame_search_init(mrb);
+  mrb_mrbmacs_gtk_frame_select_init(mrb);
+  mrb_mrbmacs_gtk_frame_tab_init(mrb);
   mrb_mrbmacs_gtk_window_init(mrb);
 }

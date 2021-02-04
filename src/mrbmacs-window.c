@@ -43,7 +43,7 @@ mrb_mrbmacs_window_compute_area(mrb_state *mrb, mrb_value self)
   font_width = mrb_int(mrb, mrb_funcall(mrb, view, "sci_text_width", 2,
       mrb_fixnum_value(STYLE_DEFAULT), mrb_str_new_lit(mrb, "A")));
   font_height = mrb_int(mrb, mrb_funcall(mrb, view, "sci_text_height", 1, mrb_fixnum_value(1)));
-  gtk_widget_set_size_request((GtkWidget *)DATA_PTR(view), font_width*(width + 6), font_height*height);
+//  gtk_widget_set_size_request((GtkWidget *)DATA_PTR(view), font_width*(width + 6), font_height*height);
 
   return view;
 }
