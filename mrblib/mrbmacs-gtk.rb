@@ -37,8 +37,12 @@ module Mrbmacs
       elsif keyval == 0xff0d # GDK_KEY_Return
         input_str = "Enter"
       end
-
       key_str = @prefix_key + mod_str
+     if @frame.view_win.sci_get_focus == false
+        if input_str == "Tab" or input_str == "Enter"
+          return true
+        end
+      end
 #      if keyval < 256
       if input_str != ""
         key_str = key_str + input_str

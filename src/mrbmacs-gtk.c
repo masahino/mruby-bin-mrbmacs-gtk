@@ -46,11 +46,26 @@ mrbmacs_io_read_cb(GIOChannel *source, GIOCondition condition, gpointer data)
 }
 
 static gboolean
+mrbmacs_replace_next_button_press(GtkWidget *widget, GdkEventButton *event, gpointer user_data)
+{
+  mrb_value ret;
+  ret = mrb_funcall(mrb, *(mrb_value *)user_data, "replace_forward", 0);
+  return FALSE;
+}
+
+static gboolean
+mrbmacs_replace_prev_button_press(GtkWidget *widget, GdkEventButton *event, gpointer user_data)
+{
+  mrb_value ret;
+  ret = mrb_funcall(mrb, *(mrb_value *)user_data, "replace_backward", 0);
+  return FALSE;
+}
+
+static gboolean
 mrbmacs_find_next_button_press(GtkWidget *widget, GdkEventButton *event, gpointer user_data)
 {
   mrb_value ret;
-  ret = mrb_funcall(mrb, *(mrb_value *)user_data, "isearch_forward",
-    0);
+  ret = mrb_funcall(mrb, *(mrb_value *)user_data, "isearch_forward", 0);
   return FALSE;
 }
 
@@ -58,8 +73,7 @@ static gboolean
 mrbmacs_find_prev_button_press(GtkWidget *widget, GdkEventButton *event, gpointer user_data)
 {
   mrb_value ret;
-  ret = mrb_funcall(mrb, *(mrb_value *)user_data, "isearch_backward",
-    0);
+  ret = mrb_funcall(mrb, *(mrb_value *)user_data, "isearch_backward", 0);
   return FALSE;
 }
 
@@ -67,8 +81,7 @@ static gboolean
 mrbmacs_search_entry_changed(GtkSearchEntry *widget, gpointer user_data)
 {
   mrb_value ret;
-  ret = mrb_funcall(mrb, *(mrb_value *)user_data, "isearch",
-    0);
+  ret = mrb_funcall(mrb, *(mrb_value *)user_data, "isearch", 0);
   return FALSE;
 }
 
@@ -78,8 +91,6 @@ mrb_mrbmacs_editloop(mrb_state *mrb, mrb_value self)
   mrb_value frame_obj;
   mrb_value prefix_key;
   struct mrb_mrbmacs_frame_data *frame;
-  mrb_value read_io_a;
-  int i;
 
   prefix_key = mrb_str_new_lit(mrb, "");
   mrb_iv_set(mrb, self, mrb_intern_lit(mrb, "@prefix_key"), prefix_key);
@@ -101,6 +112,11 @@ mrb_mrbmacs_editloop(mrb_state *mrb, mrb_value self)
   g_signal_connect(G_OBJECT(frame->search_entry),
     "search-changed", G_CALLBACK(mrbmacs_search_entry_changed), &self);
 
+  // replace button
+  g_signal_connect(G_OBJECT(frame->replace_next_button),
+    "button-press-event", G_CALLBACK(mrbmacs_replace_next_button_press), &self);
+  g_signal_connect(G_OBJECT(frame->replace_prev_button),
+    "button-press-event", G_CALLBACK(mrbmacs_replace_prev_button_press), &self);
   // notebook
   g_signal_connect(G_OBJECT(frame->notebook),
 //    "select-page", G_CALLBACK(mrbmacs_select_tab), &self);
@@ -133,6 +149,7 @@ mrb_mrbmacs_add_gtk_io_callback(mrb_state *mrb, mrb_value self)
 mrb_value
 mrb_mrbmacs_del_gtk_io_callback(mrb_state *mrb, mrb_value self)
 {
+  return self;
 }
 
 void

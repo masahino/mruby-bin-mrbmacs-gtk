@@ -34,6 +34,23 @@ mrb_mrbmacs_frame_search_entry_get_text(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
+mrb_mrbmacs_frame_replace_entry_get_text(mrb_state *mrb, mrb_value self)
+{
+  GtkWidget *replace_entry;
+  struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
+  replace_entry = fdata->replace_entry;
+  gtk_search_bar_set_search_mode(GTK_SEARCH_BAR(fdata->replace_bar), TRUE);
+#if GTK_CHECK_VERSION(3, 16, 0)
+  gtk_entry_grab_focus_without_selecting(GTK_ENTRY(replace_entry));
+#else
+  gtk_widget_grab_focus(GTK_WIDGET(replace_entry));
+#endif /* GTK_CHECK_VERSION(3, 16, 0) */
+
+  return mrb_str_new_cstr(mrb,
+    gtk_entry_get_text(GTK_ENTRY(replace_entry)));
+}
+
+static mrb_value
 mrb_mrbmacs_frame_query_replace(mrb_state *mrb, mrb_value self)
 {
   GtkWidget *isearch_entry;
@@ -62,6 +79,8 @@ mrb_mrbmacs_gtk_frame_search_init(mrb_state *mrb)
 
   mrb_define_method(mrb, frame, "search_entry_get_text",
     mrb_mrbmacs_frame_search_entry_get_text, MRB_ARGS_NONE());
+  mrb_define_method(mrb, frame, "replace_entry_get_text",
+    mrb_mrbmacs_frame_replace_entry_get_text, MRB_ARGS_NONE());
   mrb_define_method(mrb, frame, "query_replace",
     mrb_mrbmacs_frame_query_replace, MRB_ARGS_NONE());
 }
