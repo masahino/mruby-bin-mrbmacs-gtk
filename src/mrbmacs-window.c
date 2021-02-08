@@ -17,6 +17,33 @@
 #include "mrbmacs-frame.h"
 #include "mrbmacs-cb.h"
 
+int
+edit_win_get_height(mrb_state *mrb, mrb_value edit_win)
+{
+  int font_height;
+  mrb_value view;
+  mrb_int height;
+
+  height = mrb_fixnum(mrb_iv_get(mrb, edit_win, mrb_intern_cstr(mrb, "@height")));
+  view = mrb_iv_get(mrb, edit_win, mrb_intern_cstr(mrb, "@sci"));
+  font_height = mrb_int(mrb, mrb_funcall(mrb, view, "sci_text_height", 1, mrb_fixnum_value(1)));
+
+  return font_height*height;
+}
+
+int edit_win_get_width(mrb_state *mrb, mrb_value edit_win)
+{
+  int font_width;
+  mrb_value view;
+  mrb_int width;
+
+  width = mrb_fixnum(mrb_iv_get(mrb, edit_win, mrb_intern_cstr(mrb, "@width")));
+  view = mrb_iv_get(mrb, edit_win, mrb_intern_cstr(mrb, "@sci"));
+  font_width = mrb_int(mrb, mrb_funcall(mrb, view, "sci_text_width", 2,
+      mrb_fixnum_value(STYLE_DEFAULT), mrb_str_new_lit(mrb, "A")));
+
+  return font_width*(width+6);
+}
 mrb_value
 mrb_mrbmacs_window_set_callback(mrb_state *mrb, mrb_value self)
 {
@@ -47,7 +74,6 @@ mrb_mrbmacs_window_compute_area(mrb_state *mrb, mrb_value self)
 
   return view;
 }
-
 
 void
 mrb_mrbmacs_gtk_window_init(mrb_state *mrb)

@@ -147,7 +147,7 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
 
   mainwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 //  gtk_widget_set_size_request(mainwin, -1, -1);
-  gtk_window_set_default_size(GTK_WINDOW(mainwin), 738, 768);
+//  gtk_window_set_default_size(GTK_WINDOW(mainwin), 738, 768);
 
   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
   gtk_container_set_border_width(GTK_CONTAINER(vbox), 0);
@@ -207,15 +207,23 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   gtk_box_pack_start(GTK_BOX(vbox), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL), FALSE, FALSE, 0);
   fdata->status_bar = gtk_statusbar_new();
   gtk_box_pack_end(GTK_BOX(vbox), fdata->status_bar, FALSE, FALSE, 0);
-  gtk_widget_show_all(mainwin);
-//gtk_widget_hide(GTK_WIDGET(grid));
-  gtk_widget_grab_focus((GtkWidget *)DATA_PTR(view));
 
   /*
   gint w_w, w_h;
   gtk_window_get_size(GTK_WINDOW(mainwin), &w_w, &w_h);
   fprintf(stderr, "w = %d, h = %d\n", w_w, w_h);
+  fprintf(stderr, "w = %d, h = %d + %d\n", 
+    edit_win_get_width(mrb, edit_win),
+    gtk_widget_get_allocated_height(GTK_WIDGET(vbox)),edit_win_get_height(mrb, edit_win));
   */
+//  gtk_window_set_default_size(GTK_WINDOW(mainwin), 738, 768);
+  gtk_window_set_default_size(GTK_WINDOW(mainwin), edit_win_get_width(mrb, edit_win)+2,
+    edit_win_get_height(mrb, edit_win) + 88);
+
+  gtk_widget_show_all(mainwin);
+//gtk_widget_hide(GTK_WIDGET(grid));
+  gtk_widget_grab_focus((GtkWidget *)DATA_PTR(view));
+
   return self;
 }
 
