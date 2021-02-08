@@ -27,6 +27,20 @@ static const struct mrb_data_type mrb_mrbmacs_frame_data_type = {
 };
 
 static mrb_value
+mrb_mrbmacs_frame_echo_puts(mrb_state *mrb, mrb_value self)
+{
+  char *message;
+  guint message_id;
+  struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
+
+  mrb_get_args(mrb, "z", &message);
+  message_id = gtk_statusbar_push(GTK_STATUSBAR(fdata->status_bar),
+    gtk_statusbar_get_context_id(GTK_STATUSBAR(fdata->status_bar),""),
+    message);
+  return mrb_fixnum_value(message_id);
+}
+
+static mrb_value
 scintilla_echo_window_new(mrb_state *mrb, mrb_value self)
 {
   struct RClass *scintilla_gtk_class;
@@ -133,7 +147,7 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
 
   mainwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 //  gtk_widget_set_size_request(mainwin, -1, -1);
-  gtk_window_set_default_size(GTK_WINDOW(mainwin), 738, 764);
+  gtk_window_set_default_size(GTK_WINDOW(mainwin), 738, 768);
 
   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
   gtk_container_set_border_width(GTK_CONTAINER(vbox), 0);
@@ -165,6 +179,9 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   mode = gtk_label_new("");
   gtk_label_set_justify(GTK_LABEL(mode), GTK_JUSTIFY_LEFT);
   gtk_widget_set_halign(mode, GTK_ALIGN_START);
+  gtk_widget_set_margin_start(GTK_WIDGET(mode), 8);
+  gtk_widget_set_margin_top(GTK_WIDGET(mode), 2);
+  gtk_widget_set_margin_bottom(GTK_WIDGET(mode), 2);
   gtk_box_pack_start(GTK_BOX(vbox), mode, FALSE, FALSE, 0);
   mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@mode_win"), mrb_cptr_value(mrb, mode));
   fdata->mode_win = mode;
@@ -188,7 +205,8 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   //set_default_style
 
   gtk_box_pack_start(GTK_BOX(vbox), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL), FALSE, FALSE, 0);
-  gtk_box_pack_end(GTK_BOX(vbox), gtk_statusbar_new(), FALSE, FALSE, 0);
+  fdata->status_bar = gtk_statusbar_new();
+  gtk_box_pack_end(GTK_BOX(vbox), fdata->status_bar, FALSE, FALSE, 0);
   gtk_widget_show_all(mainwin);
 //gtk_widget_hide(GTK_WIDGET(grid));
   gtk_widget_grab_focus((GtkWidget *)DATA_PTR(view));
@@ -214,6 +232,8 @@ mrb_mrbmacs_gtk_frame_init(mrb_state *mrb)
     mrb_mrbmacs_frame_init, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, frame, "set_mode_text",
     mrb_mrbmacs_frame_set_mode_text, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, frame, "echo_puts",
+    mrb_mrbmacs_frame_echo_puts, MRB_ARGS_REQ(1));
 
   mrb_mrbmacs_gtk_frame_search_init(mrb);
   mrb_mrbmacs_gtk_frame_select_init(mrb);
