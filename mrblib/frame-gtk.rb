@@ -70,6 +70,13 @@ module Mrbmacs
       end
     end
 
+    def set_font(font, size)
+      @edit_win_list.each do |w|
+        w.set_font(font, size)
+        w.set_style_gtk
+        w.set_theme(@theme)
+      end
+    end
 
     def exit
     end

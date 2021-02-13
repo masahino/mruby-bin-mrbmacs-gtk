@@ -73,5 +73,12 @@ module Mrbmacs
       return send_key
     end
 
+    def select_font
+      font = @frame.select_font
+      if font != nil
+        @frame.set_font(font[0], font[1])
+        @current_buffer.mode.set_style(@frame.view_win, @theme)
+      end
+    end
   end
 end

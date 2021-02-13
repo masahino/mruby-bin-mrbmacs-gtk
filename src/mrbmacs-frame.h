@@ -14,6 +14,7 @@ struct mrb_mrbmacs_frame_data {
   GtkWidget *replace_prev_button;
   GtkWidget *notebook;
   GtkWidget *status_bar;
+  GtkWidget *menu;
 };
 
 void mrb_mrbmacs_gtk_frame_init(mrb_state *mrb);

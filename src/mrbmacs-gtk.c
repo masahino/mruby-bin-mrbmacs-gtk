@@ -15,6 +15,7 @@
 
 #include "mrbmacs-frame.h"
 #include "mrbmacs-cb.h"
+#include "mrbmacs-menu.h"
 
 mrb_state *mrb;
 
@@ -90,6 +91,7 @@ mrb_mrbmacs_editloop(mrb_state *mrb, mrb_value self)
 {
   mrb_value frame_obj;
   mrb_value prefix_key;
+  mrb_value edit_win;
   struct mrb_mrbmacs_frame_data *frame;
 
   prefix_key = mrb_str_new_lit(mrb, "");
@@ -97,6 +99,7 @@ mrb_mrbmacs_editloop(mrb_state *mrb, mrb_value self)
   
   frame_obj = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@frame"));
   frame = (struct mrb_mrbmacs_frame_data *)DATA_PTR(frame_obj);
+  edit_win = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@edit_win"));
 //  g_signal_connect(G_OBJECT((GtkWidget *)DATA_PTR(frame->view_win)),
   g_signal_connect(G_OBJECT(frame->mainwin),
     "key-press-event", G_CALLBACK(mrbmacs_keypress), &self);
@@ -129,6 +132,7 @@ mrb_mrbmacs_editloop(mrb_state *mrb, mrb_value self)
 //    GIOChannel *channel = g_io_channel_unix_new(mrb_fixnum(fd));
 //    g_io_add_watch(channel, G_IO_IN, mrbmacs_io_read_cb, &self);
 //  }
+
   gtk_main();
   return self;
 }

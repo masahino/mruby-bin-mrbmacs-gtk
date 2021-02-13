@@ -16,6 +16,30 @@
 
 #include "mrbmacs-frame.h"
 
+static mrb_value
+mrb_mrbmacs_frame_select_font(mrb_state *mrb, mrb_value self)
+{
+  GtkWidget *dialog;
+  struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
+  gint ret;
+  mrb_value ret_value;
+
+  dialog = gtk_font_chooser_dialog_new("select font", GTK_WINDOW(fdata->mainwin));
+  gtk_widget_show(dialog);
+  ret = gtk_dialog_run(GTK_DIALOG(dialog));
+  if (ret == GTK_RESPONSE_OK) {
+    ret_value = mrb_ary_new(mrb);
+    mrb_ary_push(mrb, ret_value,
+      mrb_str_new_cstr(mrb,
+        pango_font_description_get_family(gtk_font_chooser_get_font_desc(GTK_FONT_CHOOSER(dialog)))));
+    mrb_ary_push(mrb, ret_value,
+      mrb_fixnum_value(gtk_font_chooser_get_font_size(GTK_FONT_CHOOSER(dialog))/PANGO_SCALE));
+  } else {
+    ret_value = mrb_nil_value();
+  }
+  gtk_widget_destroy(dialog);
+  return ret_value;
+}
 static void mrbmacs_frame_select_item_activated(GtkWidget *widget, GtkTreePath *path, GtkTreeViewColumn *col, gpointer dialog)
 {
     gtk_dialog_response(GTK_DIALOG(dialog), GTK_RESPONSE_OK);
@@ -111,10 +135,11 @@ mrb_mrbmacs_frame_select_file(mrb_state *mrb, mrb_value self)
   if (ret == GTK_RESPONSE_OK) {
     ret_value = mrb_str_new_cstr(mrb, path);
     ret_value = mrb_str_cat_lit(mrb, ret_value, "/Untitled");
-  }
-  if (ret == GTK_RESPONSE_ACCEPT) {
+  } else if (ret == GTK_RESPONSE_ACCEPT) {
     filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
     ret_value = mrb_str_new_cstr(mrb, filename);
+  } else {
+    ret_value = mrb_nil_value();
   }
   gtk_widget_destroy(dialog);
   return ret_value;
@@ -132,5 +157,6 @@ mrb_mrbmacs_gtk_frame_select_init(mrb_state *mrb)
     mrb_mrbmacs_frame_select_file, MRB_ARGS_REQ(4));
   mrb_define_method(mrb, frame, "select_item",
     mrb_mrbmacs_frame_select_item, MRB_ARGS_REQ(3));
-
+  mrb_define_method(mrb, frame, "select_font",
+    mrb_mrbmacs_frame_select_font, MRB_ARGS_NONE());
 }

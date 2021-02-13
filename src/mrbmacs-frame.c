@@ -21,6 +21,7 @@
 #include "mrbmacs-dialog.h"
 #include "mrbmacs-window.h"
 #include "mrbmacs-cb.h"
+#include "mrbmacs-menu.h"
 
 static const struct mrb_data_type mrb_mrbmacs_frame_data_type = {
   "mrb_mrbmacs_frame_data", mrb_free,
@@ -127,11 +128,15 @@ create_search_bar(struct mrb_mrbmacs_frame_data *fdata, gboolean replace)
   return search_bar;
 }
 
+
 static mrb_value
 mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
 {
   GtkWidget *mainwin, *vbox, *mode;
   GtkWidget *notebook;
+  GtkWidget *menubar;
+  GtkAccelGroup *accel_group;
+
   struct RClass *mrbmacs_module;
 //  int font_width, font_height;
   mrb_value view, echo;
@@ -149,13 +154,20 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
 //  gtk_widget_set_size_request(mainwin, -1, -1);
 //  gtk_window_set_default_size(GTK_WINDOW(mainwin), 738, 768);
 
+  DATA_TYPE(self) = &mrb_mrbmacs_frame_data_type;
+  DATA_PTR(self) = NULL;
+  fdata->mainwin = mainwin;
+
   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
   gtk_container_set_border_width(GTK_CONTAINER(vbox), 0);
   gtk_container_add(GTK_CONTAINER(mainwin), vbox);
 
-  DATA_TYPE(self) = &mrb_mrbmacs_frame_data_type;
-  DATA_PTR(self) = NULL;
-  fdata->mainwin = mainwin;
+  accel_group = gtk_accel_group_new ();
+  gtk_window_add_accel_group(GTK_WINDOW(mainwin), accel_group);
+
+  // menu
+  menubar = mrbmacs_create_gtk_menu();
+  gtk_box_pack_start(GTK_BOX(vbox), menubar, FALSE, TRUE, 0);
 
   notebook = gtk_notebook_new();
   gtk_notebook_set_tab_pos(GTK_NOTEBOOK(notebook), GTK_POS_TOP);
@@ -221,7 +233,7 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
     edit_win_get_height(mrb, edit_win) + 88);
 
   gtk_widget_show_all(mainwin);
-//gtk_widget_hide(GTK_WIDGET(grid));
+
   gtk_widget_grab_focus((GtkWidget *)DATA_PTR(view));
 
   return self;

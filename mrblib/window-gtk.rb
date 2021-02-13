@@ -23,10 +23,12 @@ module Mrbmacs
     end
 
     def setup_sci_default
-      @sci.sci_style_set_font Scintilla::STYLE_DEFAULT, "Monospace"
-      @sci.sci_style_set_size Scintilla::STYLE_DEFAULT, 14
-      font_width = @sci.sci_text_width Scintilla::STYLE_DEFAULT, "A"
-      font_height = @sci.sci_text_height 1
+      font = "Monospace"
+      if Scintilla::PLATFORM == :GTK_MACOSX
+        font = "Monaco"
+      end
+      size = 14
+      set_font(font, size)
 
       @sci.sci_set_caret_fore 0xffffff
       @sci.sci_set_caretstyle(Scintilla::CARETSTYLE_BLOCK_AFTER | Scintilla::CARETSTYLE_OVERSTRIKE_BLOCK | Scintilla::CARETSTYLE_BLOCK)
@@ -66,6 +68,13 @@ module Mrbmacs
         @sci.sci_marker_set_fore(n, theme.foreground_color)
         @sci.sci_marker_set_back(n, theme.background_color)
       end
+    end
+
+    def set_font(font, size)
+      @sci.sci_style_set_font Scintilla::STYLE_DEFAULT, font
+      @sci.sci_style_set_size Scintilla::STYLE_DEFAULT, size
+      font_width = @sci.sci_text_width Scintilla::STYLE_DEFAULT, "A"
+      font_height = @sci.sci_text_height 1
     end
   end
 end
