@@ -8,5 +8,5 @@ before_install:
 script:
   - export MRUBY_CONFIG=`pwd`/.travis_config.rb
   - git clone https://github.com/mruby/mruby.git
-  - (cd mruby; ./minirake)
-  - (cd mruby; xvfb-run ./minirake test)
+  - (cd mruby; rake)
+  - (cd mruby; xvfb-run rake test)

@@ -11,6 +11,7 @@ MRuby::Build.new do |conf|
   enable_debug
 
   conf.cc.defines = %w(MRB_ENABLE_ALL_SYMBOLS)
+  conf.cc.defines = %w(MRB_UTF8_STRING)
 
   # Use mrbgems
   # conf.gem 'examples/mrbgems/ruby_extension_example'
@@ -21,6 +22,8 @@ MRuby::Build.new do |conf|
   # conf.gem :github => 'masuidrive/mrbgems-example', :checksum_hash => '76518e8aecd131d047378448ac8055fa29d974a9'
   # conf.gem :git => 'git@github.com:masuidrive/mrbgems-example.git', :branch => 'master', :options => '-v'
   conf.gembox 'default'
+  conf.gem :github => 'masahino/mruby-mrbmacs-lsp'
+  conf.gem :github => 'masahino/mruby-mrbmacs-themes-base16'
   conf.gem "#{MRUBY_ROOT}/mrbgems/mruby-eval"
   conf.gem "#{MRUBY_ROOT}/mrbgems/mruby-exit"
   conf.gem "#{MRUBY_ROOT}/mrbgems/mruby-bin-mrbc"
