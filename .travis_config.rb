@@ -23,7 +23,7 @@ MRuby::Build.new do |conf|
   # conf.gem :git => 'git@github.com:masuidrive/mrbgems-example.git', :branch => 'master', :options => '-v'
   conf.gembox 'default'
   conf.gem :github => 'masahino/mruby-mrbmacs-lsp'
-  conf.gem :github => 'masahino/mruby-mrbmacs-themes-base16'
+  conf.gem :github => 'masahino/mruby-mrbmacs-themes-base16', :branch => 'main'
   conf.gem "#{MRUBY_ROOT}/mrbgems/mruby-eval"
   conf.gem "#{MRUBY_ROOT}/mrbgems/mruby-exit"
   conf.gem "#{MRUBY_ROOT}/mrbgems/mruby-bin-mrbc"
