@@ -57,6 +57,7 @@ module Mrbmacs
       @sci.sci_marker_define(Scintilla::SC_MARKNUM_FOLDERMIDTAIL, Scintilla::SC_MARK_TCORNER)
       @sci.sci_marker_set_fore(Scintilla::SC_MARKNUM_FOLDERMIDTAIL, 0xffffff)
       @sci.sci_marker_set_back(Scintilla::SC_MARKNUM_FOLDERMIDTAIL, 0x000000)
+      @sci.sci_set_indentation_guides(Scintilla::SC_IV_LOOKBOTH)
     end
 
     def set_theme(theme)
