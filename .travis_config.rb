@@ -48,7 +48,11 @@ MRuby::Build.new do |conf|
   conf.gem "#{MRUBY_ROOT}/.."
   conf.linker.libraries << "stdc++"
 
-  # conf.cc do |cc|
+   conf.cc do |cc|
+    cc.flags << `pkg-config --cflags gtk+-3.0`.chomp
+    if RUBY_PLATFORM.include?('darwin')
+      cc.flags << `pkg-config --cflags gtk-mac-integration-gtk3`.chomp
+    end
   #   cc.command = ENV['CC'] || 'gcc'
   #   cc.flags = [ENV['CFLAGS'] || %w()]
   #   cc.include_paths = ["#{root}/include"]
@@ -56,7 +60,7 @@ MRuby::Build.new do |conf|
   #   cc.option_include_path = '-I%s'
   #   cc.option_define = '-D%s'
   #   cc.compile_options = "%{flags} -MMD -o %{outfile} -c %{infile}"
-  # end
+   end
 
   # mrbc settings
   # conf.mrbc do |mrbc|
@@ -64,7 +68,10 @@ MRuby::Build.new do |conf|
   # end
 
   # Linker settings
-  # conf.linker do |linker|
+  conf.linker do |linker|
+    if RUBY_PLATFORM.include?('darwin')
+      linker.flags_before_libraries << `pkg-config --libs gtk-mac-integration-gtk3`.chomp
+    end
   #   linker.command = ENV['LD'] || 'gcc'
   #   linker.flags = [ENV['LDFLAGS'] || []]
   #   linker.flags_before_libraries = []
@@ -74,7 +81,7 @@ MRuby::Build.new do |conf|
   #   linker.option_library = '-l%s'
   #   linker.option_library_path = '-L%s'
   #   linker.link_options = "%{flags} -o %{outfile} %{objs} %{libs}"
-  # end
+  end
 
   # Archiver settings
   # conf.archiver do |archiver|

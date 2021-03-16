@@ -1,6 +1,9 @@
 #include <locale.h>
 #include <string.h>
 #include <gtk/gtk.h>
+#ifdef MAC_INTEGRATION
+#include <gtkosxapplication.h>
+#endif
 
 #include "mruby.h"
 #include "mruby/class.h"
@@ -136,6 +139,9 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   GtkWidget *notebook;
   GtkWidget *menubar;
   GtkAccelGroup *accel_group;
+#ifdef MAC_INTEGRATION
+  GtkosxApplication *osxapp;
+#endif
 
   struct RClass *mrbmacs_module;
 //  int font_width, font_height;
@@ -154,6 +160,11 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
 //  gtk_widget_set_size_request(mainwin, -1, -1);
 //  gtk_window_set_default_size(GTK_WINDOW(mainwin), 738, 768);
 
+#ifdef MAC_INTEGRATION
+  osxapp = g_object_new(GTKOSX_TYPE_APPLICATION, NULL);
+  gtkosx_application_set_use_quartz_accelerators(osxapp, FALSE);
+#endif
+
   DATA_TYPE(self) = &mrb_mrbmacs_frame_data_type;
   DATA_PTR(self) = NULL;
   fdata->mainwin = mainwin;
@@ -168,7 +179,6 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   // menu
   menubar = mrbmacs_create_gtk_menu();
   gtk_box_pack_start(GTK_BOX(vbox), menubar, FALSE, TRUE, 0);
-
   notebook = gtk_notebook_new();
   gtk_notebook_set_tab_pos(GTK_NOTEBOOK(notebook), GTK_POS_TOP);
   gtk_notebook_set_scrollable(GTK_NOTEBOOK(notebook), TRUE);
@@ -220,22 +230,32 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   fdata->status_bar = gtk_statusbar_new();
   gtk_box_pack_end(GTK_BOX(vbox), fdata->status_bar, FALSE, FALSE, 0);
 
-  /*
+/*
   gint w_w, w_h;
   gtk_window_get_size(GTK_WINDOW(mainwin), &w_w, &w_h);
   fprintf(stderr, "w = %d, h = %d\n", w_w, w_h);
   fprintf(stderr, "w = %d, h = %d + %d\n", 
     edit_win_get_width(mrb, edit_win),
     gtk_widget_get_allocated_height(GTK_WIDGET(vbox)),edit_win_get_height(mrb, edit_win));
-  */
+*/
 //  gtk_window_set_default_size(GTK_WINDOW(mainwin), 738, 768);
-  gtk_window_set_default_size(GTK_WINDOW(mainwin), edit_win_get_width(mrb, edit_win)+2,
-    edit_win_get_height(mrb, edit_win) + 88);
+  gtk_window_set_default_size(GTK_WINDOW(mainwin),
+    edit_win_get_width(mrb, edit_win) + 2,
+    edit_win_get_height(mrb, edit_win) + 90); // 112
 
   gtk_widget_show_all(mainwin);
 
+#ifdef MAC_INTEGRATION
+  gtkosx_application_set_menu_bar(osxapp, GTK_MENU_SHELL(menubar));
+  gtk_widget_hide(menubar);
+#endif
+
+
   gtk_widget_grab_focus((GtkWidget *)DATA_PTR(view));
 
+#ifdef MAC_INTEGRATION
+  gtkosx_application_ready(osxapp);
+#endif
   return self;
 }
 
