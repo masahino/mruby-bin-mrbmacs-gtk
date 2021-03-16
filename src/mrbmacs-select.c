@@ -101,6 +101,38 @@ mrb_mrbmacs_frame_select_item(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
+mrb_mrbmacs_frame_select_directory(mrb_state *mrb, mrb_value self)
+{
+  GtkWidget *dialog;
+  char *title;
+  char *path;
+  char *dirname = NULL;
+  struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
+  gint ret;
+  mrb_value ret_value;
+
+  mrb_get_args(mrb, "zz", &title, &path);
+
+  dialog = gtk_file_chooser_dialog_new(title, GTK_WINDOW(fdata->mainwin),
+    GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER,
+    "_Cancel", GTK_RESPONSE_CANCEL,
+    "_Open", GTK_RESPONSE_ACCEPT, NULL);
+  gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), path);
+  gtk_file_chooser_set_show_hidden(GTK_FILE_CHOOSER(dialog), TRUE);
+
+  ret = gtk_dialog_run (GTK_DIALOG(dialog));
+
+  if (ret == GTK_RESPONSE_ACCEPT) {
+    dirname = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+    ret_value = mrb_str_new_cstr(mrb, dirname);
+  } else {
+    ret_value = mrb_nil_value();
+  }
+  gtk_widget_destroy(dialog);
+  return ret_value;
+}
+
+static mrb_value
 mrb_mrbmacs_frame_select_file(mrb_state *mrb, mrb_value self)
 {
   GtkWidget *dialog;
@@ -153,6 +185,8 @@ mrb_mrbmacs_gtk_frame_select_init(mrb_state *mrb)
   mrbmacs_module = mrb_module_get(mrb, "Mrbmacs");
   frame = mrb_class_get_under(mrb, mrbmacs_module, "Frame");
 
+  mrb_define_method(mrb, frame, "select_directory",
+    mrb_mrbmacs_frame_select_directory, MRB_ARGS_REQ(2));
   mrb_define_method(mrb, frame, "select_file",
     mrb_mrbmacs_frame_select_file, MRB_ARGS_REQ(4));
   mrb_define_method(mrb, frame, "select_item",

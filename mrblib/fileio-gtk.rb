@@ -1,5 +1,9 @@
 module Mrbmacs
   class ApplicationGtk < Application
+    def read_dir_name(prompt, default_directory = nil)
+      @frame.select_directory(prompt, default_directory)
+    end
+
     def read_file_name(prompt, directory)
       @frame.select_file(prompt, directory, true, nil)
     end
