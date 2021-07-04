@@ -69,6 +69,10 @@ module Mrbmacs
         @sci.sci_marker_set_fore(n, theme.foreground_color)
         @sci.sci_marker_set_back(n, theme.background_color)
       end
+      if @theme.font_color[:color_annotation]
+        @sci.sci_annotation_set_visible(Scintilla::ANNOTATION_BOXED)
+      end
+
     end
 
     def set_font(font, size)
