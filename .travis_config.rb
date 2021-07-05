@@ -35,16 +35,16 @@ MRuby::Build.new do |conf|
     end
   end
 
-  conf.gem :github => 'masahino/mruby-scintilla-base', :branch => "scintilla5" do |g|
+  conf.gem :github => 'masahino/mruby-scintilla-base' do |g|
     g.cc.flags << `pkg-config --cflags gtk+-3.0`.chomp
     g.download_scintilla
   end
-  conf.gem :github => 'masahino/mruby-scintilla-gtk', :branch => "scintilla5" do |g|
+  conf.gem :github => 'masahino/mruby-scintilla-gtk' do |g|
     g.cc.flags << `pkg-config --cflags gtk+-3.0`.chomp
     g.download_scintilla
     g.linker.flags_before_libraries << `pkg-config --libs gmodule-2.0 gtk+-3.0`.chomp
   end
-  conf.gem :github => 'masahino/mruby-mrbmacs-base', :branch => "scintilla5"
+  conf.gem :github => 'masahino/mruby-mrbmacs-base'
 
   conf.gem "#{MRUBY_ROOT}/.."
   conf.linker.libraries << "stdc++"
