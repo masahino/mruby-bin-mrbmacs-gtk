@@ -33,6 +33,7 @@ module Mrbmacs
       @sci.sci_set_caret_fore 0xffffff
       @sci.sci_set_caretstyle(Scintilla::CARETSTYLE_BLOCK_AFTER | Scintilla::CARETSTYLE_OVERSTRIKE_BLOCK | Scintilla::CARETSTYLE_BLOCK)
       @sci.sci_set_mouse_dwell_time 1000
+      @sci.sci_set_mod_event_mask(Scintilla::SC_MOD_INSERTTEXT | Scintilla::SC_MOD_DELETETEXT)
     end
 
    def set_style_gtk
