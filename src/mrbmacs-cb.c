@@ -11,11 +11,22 @@
 
 #include <locale.h>
 #include <gtk/gtk.h>
+#ifdef MAC_INTEGRATION
+#include <gtkosxapplication.h>
+#endif
 #include <Scintilla.h>
 
 #include "mrbmacs-frame.h"
 
 extern mrb_state *mrb;
+
+#ifdef MAC_INTEGRATION
+void open_osx(GtkosxApplication *osxapp, gchar *path, gpointer data) {
+  mrb_value app;
+  app = *(mrb_value *)data;
+  mrb_funcall(mrb, app, "find_file", 1, mrb_str_new_cstr(mrb, path));
+}
+#endif
 
 gboolean
 //mrbmacs_select_tab(GtkWidget *widget, gboolean arg1, gpointer data)

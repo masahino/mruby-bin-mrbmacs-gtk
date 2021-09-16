@@ -131,7 +131,6 @@ create_search_bar(struct mrb_mrbmacs_frame_data *fdata, gboolean replace)
   return search_bar;
 }
 
-
 static mrb_value
 mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
 {

@@ -11,6 +11,9 @@
 
 #include <locale.h>
 #include <gtk/gtk.h>
+#ifdef MAC_INTEGRATION
+#include <gtkosxapplication.h>
+#endif
 #include <Scintilla.h>
 
 #include "mrbmacs-frame.h"
@@ -132,8 +135,13 @@ mrb_mrbmacs_editloop(mrb_state *mrb, mrb_value self)
 //    GIOChannel *channel = g_io_channel_unix_new(mrb_fixnum(fd));
 //    g_io_add_watch(channel, G_IO_IN, mrbmacs_io_read_cb, &self);
 //  }
-
+#ifdef MAC_INTEGRATION
+  GtkosxApplication *osxapp;
+  osxapp = g_object_new(GTKOSX_TYPE_APPLICATION, NULL);
+  g_signal_connect(osxapp, "NSApplicationOpenFile", G_CALLBACK(open_osx), &self);
+#endif
   gtk_main();
+
   return self;
 }
 

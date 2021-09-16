@@ -1,6 +1,9 @@
 #include <locale.h>
 #include <string.h>
 #include <gtk/gtk.h>
+#ifdef MAC_INTEGRATION
+#include <gtkosxapplication.h>
+#endif
 
 #include "mruby.h"
 #include "mruby/class.h"
