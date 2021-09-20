@@ -32,6 +32,10 @@ mrb_mrbmacs_frame_y_or_n(mrb_state *mrb, mrb_value self)
     GTK_BUTTONS_YES_NO,
     "%s",
     prompt);
+  gtk_dialog_add_buttons(GTK_DIALOG(dialog),
+    "_Cancel",
+           GTK_RESPONSE_CANCEL,
+           NULL);
   response = gtk_dialog_run(GTK_DIALOG(dialog));
   if (response == GTK_RESPONSE_YES) {
     ret = mrb_true_value();

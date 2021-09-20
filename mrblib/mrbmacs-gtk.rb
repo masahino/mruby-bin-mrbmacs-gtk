@@ -38,7 +38,7 @@ module Mrbmacs
         input_str = "Enter"
       end
       key_str = @prefix_key + mod_str
-     if @frame.view_win.sci_get_focus == false
+      if @frame.view_win.sci_get_focus == false
         if input_str == "Tab" or input_str == "Enter"
           return true
         end

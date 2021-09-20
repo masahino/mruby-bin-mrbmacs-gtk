@@ -17,20 +17,60 @@
 #include "mrbmacs-frame.h"
 
 static mrb_value
+mrb_mrbmacs_frame_start_search(mrb_state *mrb, mrb_value self)
+{
+  struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
+  gtk_search_bar_set_search_mode(GTK_SEARCH_BAR(fdata->search_bar), TRUE);
+
+  return mrb_nil_value();
+}
+
+static mrb_value
+mrb_mrbmacs_frame_stop_search(mrb_state *mrb, mrb_value self)
+{
+  struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
+  gtk_search_bar_set_search_mode(GTK_SEARCH_BAR(fdata->search_bar), FALSE);
+
+  return mrb_nil_value();
+}
+
+static mrb_value
+mrb_mrbmacs_frame_start_replace(mrb_state *mrb, mrb_value self)
+{
+  struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
+  gtk_search_bar_set_search_mode(GTK_SEARCH_BAR(fdata->replace_bar), TRUE);
+
+  return mrb_nil_value();
+}
+
+static mrb_value
+mrb_mrbmacs_frame_stop_replace(mrb_state *mrb, mrb_value self)
+{
+  struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
+  gtk_search_bar_set_search_mode(GTK_SEARCH_BAR(fdata->replace_bar), FALSE);
+
+  return mrb_nil_value();
+}
+
+static mrb_value
 mrb_mrbmacs_frame_search_entry_get_text(mrb_state *mrb, mrb_value self)
 {
   GtkWidget *isearch_entry;
   struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
   isearch_entry = fdata->search_entry;
-  gtk_search_bar_set_search_mode(GTK_SEARCH_BAR(fdata->search_bar), TRUE);
+  if (gtk_search_bar_get_search_mode(GTK_SEARCH_BAR(fdata->search_bar)) == TRUE) {
 #if GTK_CHECK_VERSION(3, 16, 0)
-  gtk_entry_grab_focus_without_selecting(GTK_ENTRY(isearch_entry));
+    gtk_entry_grab_focus_without_selecting(GTK_ENTRY(isearch_entry));
 #else
-  gtk_widget_grab_focus(GTK_WIDGET(isearch_entry));
+    gtk_widget_grab_focus(GTK_WIDGET(isearch_entry));
 #endif /* GTK_CHECK_VERSION(3, 16, 0) */
 
-  return mrb_str_new_cstr(mrb,
-    gtk_entry_get_text(GTK_ENTRY(isearch_entry)));
+    return mrb_str_new_cstr(mrb,
+      gtk_entry_get_text(GTK_ENTRY(isearch_entry)));
+  } else {
+    fprintf(stderr, "search mod is false\n");
+  }
+  return mrb_nil_value();
 }
 
 static mrb_value
@@ -77,6 +117,10 @@ mrb_mrbmacs_gtk_frame_search_init(mrb_state *mrb)
   mrbmacs_module = mrb_module_get(mrb, "Mrbmacs");
   frame = mrb_class_get_under(mrb, mrbmacs_module, "Frame");
 
+  mrb_define_method(mrb, frame, "start_search", mrb_mrbmacs_frame_start_search, MRB_ARGS_NONE());
+  mrb_define_method(mrb, frame, "stop_search", mrb_mrbmacs_frame_stop_search, MRB_ARGS_NONE());
+  mrb_define_method(mrb, frame, "start_replace", mrb_mrbmacs_frame_start_replace, MRB_ARGS_NONE());
+  mrb_define_method(mrb, frame, "stop_replace", mrb_mrbmacs_frame_stop_replace, MRB_ARGS_NONE());
   mrb_define_method(mrb, frame, "search_entry_get_text",
     mrb_mrbmacs_frame_search_entry_get_text, MRB_ARGS_NONE());
   mrb_define_method(mrb, frame, "replace_entry_get_text",
