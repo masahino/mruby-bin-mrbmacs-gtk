@@ -12,8 +12,8 @@ module Mrbmacs
       del_gtk_io_callback(io)
     end
 
-    def init_gtk_sci_event()
-      add_sci_event(Scintilla::SCN_URIDROPPED) do |app, scn|
+    def init_gtk_sci_event
+      add_sci_event(Scintilla::SCN_URIDROPPED) do |_app, scn|
         filename = scn['text'].gsub('file://', '').chomp
         find_file(filename)
       end

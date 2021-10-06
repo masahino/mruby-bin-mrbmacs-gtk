@@ -9,7 +9,7 @@ module Mrbmacs
     end
 
     def read_save_file_name(prompt, directory, default_name = nil)
-      if default_name == ""
+      if default_name == ''
         default_name = nil
       end
       @frame.select_file(prompt, directory, false, default_name)
@@ -18,12 +18,12 @@ module Mrbmacs
     def find_file(filename = nil)
       if filename == nil
         dir = @current_buffer.directory
-        filename = read_file_name("find file: ", dir)
+        filename = read_file_name('find file: ', dir)
         @frame.modeline_refresh(self)
       end
       if filename != nil
-        if Mrbmacs::get_buffer_from_path(@buffer_list, filename) != nil
-          switch_to_buffer(Mrbmacs::get_buffer_from_path(@buffer_list, filename).name)
+        if Mrbmacs.get_buffer_from_path(@buffer_list, filename) != nil
+          switch_to_buffer(Mrbmacs.get_buffer_from_path(@buffer_list, filename).name)
         else
           @current_buffer.pos = @frame.view_win.sci_get_current_pos
           new_buffer = Buffer.new(filename)

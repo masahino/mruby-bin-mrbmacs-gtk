@@ -62,7 +62,7 @@ module Mrbmacs
       echo_gets(prompt)
     end
 
-    def waitkey(win)
+    def waitkey(_win)
       if @key_buffer.size > 0
         @key_buffer.pop
       else

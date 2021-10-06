@@ -1,6 +1,6 @@
 module Mrbmacs
   class ApplicationGtk < Application
-    def keyboard_quit()
+    def keyboard_quit
       super
       if @frame.view_win.sci_get_focus == false
         @frame.stop_search

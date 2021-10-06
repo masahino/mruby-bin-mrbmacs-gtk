@@ -1,8 +1,6 @@
-# coding: utf-8
 module Mrbmacs
   class EditWindowGtk < EditWindow
-    attr_accessor :sci, :frame
-    attr_accessor :buffer, :x1, :y1, :width, :height
+    attr_accessor :sci, :frame, :buffer, :x1, :y1, :width, :height
 
     def initialize(frame, buffer, x1, y1, width, height)
       @frame = frame
@@ -23,9 +21,9 @@ module Mrbmacs
     end
 
     def setup_sci_default
-      font = "Monospace"
+      font = 'Monospace'
       if Scintilla::PLATFORM == :GTK_MACOSX
-        font = "Monaco"
+        font = 'Monaco'
       end
       size = 14
       set_font(font, size)
@@ -36,7 +34,7 @@ module Mrbmacs
       @sci.sci_set_mod_event_mask(Scintilla::SC_MOD_INSERTTEXT | Scintilla::SC_MOD_DELETETEXT)
     end
 
-   def set_style_gtk
+    def set_style_gtk
       @sci.sci_marker_define(Scintilla::SC_MARKNUM_FOLDEROPEN, Scintilla::SC_MARK_BOXMINUS)
       @sci.sci_marker_set_fore(Scintilla::SC_MARKNUM_FOLDEROPEN, 0xffffff)
       @sci.sci_marker_set_back(Scintilla::SC_MARKNUM_FOLDEROPEN, 0x000000)
@@ -73,13 +71,12 @@ module Mrbmacs
       if @theme.font_color[:color_annotation]
         @sci.sci_annotation_set_visible(Scintilla::ANNOTATION_BOXED)
       end
-
     end
 
     def set_font(font, size)
       @sci.sci_style_set_font Scintilla::STYLE_DEFAULT, font
       @sci.sci_style_set_size Scintilla::STYLE_DEFAULT, size
-      font_width = @sci.sci_text_width Scintilla::STYLE_DEFAULT, "A"
+      font_width = @sci.sci_text_width Scintilla::STYLE_DEFAULT, 'A'
       font_height = @sci.sci_text_height 1
     end
   end

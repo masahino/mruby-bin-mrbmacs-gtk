@@ -15,55 +15,55 @@ module Mrbmacs
     end
 
     def key_press(state, keyval)
-#      @frame.view_win.sci_set_empty_selection(@frame.view_win.sci_get_current_pos())
+      #      @frame.view_win.sci_set_empty_selection(@frame.view_win.sci_get_current_pos())
       send_key = true
-      mod_str = ""
-      if (state & (1<<2)) == (1<<2) # CONTROL_MASK
-        mod_str = "C-"
+      mod_str = ''
+      if (state & (1 << 2)) == (1 << 2) # CONTROL_MASK
+        mod_str = 'C-'
       end
-      if (state & (1<<28)) == (1<<28) # META_MASK
-        mod_str = "M-"
+      if (state & (1 << 28)) == (1 << 28) # META_MASK
+        mod_str = 'M-'
       end
-      input_str = ""
+      input_str = ''
       if keyval < 256
         input_str = keyval.chr
-#        if keyval == 0x020 # GDK_KEY_Space
-#          if mod_str == "C-"
-#            input_str = "@"
-#          end
-#        end
+        #        if keyval == 0x020 # GDK_KEY_Space
+        #          if mod_str == "C-"
+        #            input_str = "@"
+        #          end
+        #        end
       elsif keyval == 0xff09 # GDK_KEY_Tab
-        input_str = "Tab"
+        input_str = 'Tab'
       elsif keyval == 0xff0d # GDK_KEY_Return
-        input_str = "Enter"
+        input_str = 'Enter'
       end
       key_str = @prefix_key + mod_str
       if @frame.view_win.sci_get_focus == false
-        if input_str == "Tab" or input_str == "Enter"
+        if input_str == 'Tab' || input_str == 'Enter'
           return true
         end
       end
-#      if keyval < 256
-      if input_str != ""
-        key_str = key_str + input_str
+      #      if keyval < 256
+      if input_str != ''
+        key_str += input_str
         command = key_scan(key_str)
         if command != nil
           if command.is_a?(Integer)
-#            @frame.view_win.send_message(command, nil, nil)
-            @prefix_key = ""
+            #            @frame.view_win.send_message(command, nil, nil)
+            @prefix_key = ''
           end
-          if command == "prefix"
-            @prefix_key = key_str + " "
+          if command == 'prefix'
+            @prefix_key = key_str + ' '
           else
             extend(command)
-            @prefix_key = ""
+            @prefix_key = ''
           end
           send_key = false
         else
-          @prefix_key = ""
+          @prefix_key = ''
         end
       elsif keyval == 0xff1b # GDK_KEY_Escape
-        @prefix_key = "M-"
+        @prefix_key = 'M-'
         send_key = false
       end
       if $DEBUG

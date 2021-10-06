@@ -7,12 +7,12 @@ module Mrbmacs
       while (pos = @frame.view_win.sci_search_in_target(str.length, str)) != -1
         if query == true
           @frame.view_win.sci_set_sel(@frame.view_win.sci_get_target_start,
-            @frame.view_win.sci_get_target_end)
+                                      @frame.view_win.sci_get_target_end)
           case @frame.y_or_n("Query replacing #{str} with #{newstr}:")
           when true
             @frame.view_win.sci_replace_target(newstr.length, newstr)
           when nil # cancel
-            @frame.echo_puts("Quit")
+            @frame.echo_puts('Quit')
             break
           end
         else
@@ -32,14 +32,14 @@ module Mrbmacs
       str = @frame.search_entry_get_text
       newstr = @frame.replace_entry_get_text
       replace_string(str, newstr, @frame.view_win.sci_get_anchor,
-        @frame.view_win.sci_get_length, true)
+                     @frame.view_win.sci_get_length, true)
     end
 
     def replace_backward
       str = @frame.search_entry_get_text
       newstr = @frame.replace_entry_get_text
       replace_string(str, newstr, @frame.view_win.sci_get_current_pos,
-        0, true)
+                     0, true)
     end
   end
 end
