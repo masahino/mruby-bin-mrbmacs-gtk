@@ -1,6 +1,6 @@
 $script_dir = File.dirname(__FILE__) + "/scripts/"
 assert('update_buffer_window') do
-  o = `#{ENV['BUILD_BIN_PATH']}#{cmd('mrbmacs-gtk')} -l #{$script_dir}update_buffer_window`
+  o = `#{cmd('mrbmacs-gtk')} -l #{$script_dir}update_buffer_window`
   assert_equal 0, $?.exitstatus
   lines = o.split("\n")
   assert_equal "*Messages*", lines[0], "@current_buffer.name"

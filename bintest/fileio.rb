@@ -1,6 +1,6 @@
 $script_dir = File.dirname(__FILE__) + "/scripts/"
 assert('find-file') do
-  o = `#{ENV['BUILD_BIN_PATH']}#{cmd('mrbmacs-gtk')} -l #{$script_dir}find_file`
+  o = `#{cmd('mrbmacs-gtk')} -l #{$script_dir}find_file`
   assert_equal 0, $?.exitstatus
   lines = o.split("\n")
   assert_equal "test.input", lines[0]
