@@ -20,10 +20,7 @@ mrb_value
 add_new_edit_win_with_tab(mrb_state *mrb, mrb_value frame, mrb_value buffer, GtkWidget *notebook)
 {
   mrb_value view, edit_win;
-  mrb_value buffer_name;
   int i;
-
-  buffer_name = mrb_funcall(mrb, buffer, "name", 0);
 
   /* edit window */
   /* initial buffer "*scratch*" */
@@ -34,8 +31,7 @@ add_new_edit_win_with_tab(mrb_state *mrb, mrb_value frame, mrb_value buffer, Gtk
   view = mrb_funcall(mrb, edit_win, "sci", 0);
   gtk_widget_show((GtkWidget *)DATA_PTR(view));
   i = gtk_notebook_append_page(GTK_NOTEBOOK(notebook), (GtkWidget *)DATA_PTR(view),
-    gtk_label_new(mrb_str_to_cstr(mrb, buffer_name)));
-
+    NULL);
   gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), i);
 
   return edit_win;
@@ -44,24 +40,17 @@ add_new_edit_win_with_tab(mrb_state *mrb, mrb_value frame, mrb_value buffer, Gtk
 static mrb_value
 mrb_mrbmacs_frame_add_new_tab(mrb_state *mrb, mrb_value self)
 {
-  mrb_value buffer, edit_win, buffer_name, edit_win_list;
-  mrb_value view;
+  mrb_value buffer, edit_win, edit_win_list;
   struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
 
   mrb_get_args(mrb, "o", &buffer);
-  buffer_name = mrb_funcall(mrb, buffer, "name", 0);
-
   /* edit window */
   /* initial buffer "*scratch*" */
   edit_win = add_new_edit_win_with_tab(mrb, self, buffer, fdata->notebook);
-  view = mrb_funcall(mrb, edit_win, "sci", 0);
-
   mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@view_win"), mrb_funcall(mrb, edit_win, "sci", 0));
-
   edit_win_list = mrb_iv_get(mrb, self, mrb_intern_cstr(mrb, "@edit_win_list"));
   mrb_funcall(mrb, edit_win_list, "push", 1, edit_win);
   mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@edit_win"), edit_win);
-
   return mrb_nil_value();
 }
 
