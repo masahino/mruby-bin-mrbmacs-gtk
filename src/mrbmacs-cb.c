@@ -34,10 +34,11 @@ mrbmacs_select_tab(GtkWidget *notebook, GtkWidget *page, guint page_num, gpointe
 {
   mrb_value app;
   const gchar *buffername;
-
   app = *(mrb_value *)data;
   buffername = gtk_notebook_get_tab_label_text(GTK_NOTEBOOK(notebook), page);
-  mrb_funcall(mrb, app, "switch_to_buffer", 1, mrb_str_new_cstr(mrb, buffername));
+  if (buffername != NULL) {
+    mrb_funcall(mrb, app, "switch_to_buffer", 1, mrb_str_new_cstr(mrb, buffername));
+  }
   return FALSE;
 }
 
