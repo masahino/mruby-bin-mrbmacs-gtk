@@ -98,16 +98,16 @@ jobs:
         run: echo '::set-env name=PATH::C:\windows\System32'
 
   Windows-mingw:
-        runs-on: windows-latest
-        timeout-minutes: 10
-        env:
-            MRUBY_CONFIG: ci/gcc-clang
-            CC: gcc
-        steps:
-            - uses: actions/checkout@v3
-            - name: Ruby version
-                run: ruby -v
-            - name: Compiler version
-                run: ${{ env.CC }} --version
-            - name: Build and test
-                run: ./build.sh
+    runs-on: windows-latest
+    timeout-minutes: 10
+    env:
+        MRUBY_CONFIG: ci/gcc-clang
+        CC: gcc
+    steps:
+        - uses: actions/checkout@v3
+        - name: Ruby version
+          run: ruby -v
+        - name: Compiler version
+          run: ${{ env.CC }} --version
+        - name: Build and test
+          run: ./build.sh
