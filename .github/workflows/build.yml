@@ -12,6 +12,8 @@ jobs:
       CC: gcc
     steps:
       - uses: actions/checkout@v2.4.0
+      - name: install packages
+        run: sudo apt-get install libgtk-3-dev
       - name: Ruby version
         run: ruby -v
       - name: Compiler version
