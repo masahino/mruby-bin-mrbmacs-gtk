@@ -32,7 +32,7 @@ module Mrbmacs
           add_buffer_to_frame(@current_buffer)
           open_file(filename)
           new_buffer.docpointer = @frame.view_win.sci_get_docpointer
-          @frame.set_theme(@theme)
+          @frame.apply_theme(@theme)
           @keymap.set_keymap(@frame.view_win)
           @frame.view_win.sci_set_lexer_language(@current_buffer.mode.lexer)
           @current_buffer.mode.set_style(@frame.view_win, @theme)

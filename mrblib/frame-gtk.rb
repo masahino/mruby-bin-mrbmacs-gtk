@@ -35,10 +35,10 @@ module Mrbmacs
       @view_win.sci_marker_set_back(SC_MARKNUM_FOLDERMIDTAIL, 0x000000)
     end
 
-    def set_theme(theme)
+    def apply_theme(theme)
       @theme = theme
       @edit_win_list.each do |w|
-        w.set_theme(theme)
+        w.apply_theme(theme)
       end
     end
 
@@ -74,7 +74,7 @@ module Mrbmacs
       @edit_win_list.each do |w|
         w.set_font(font, size)
         w.set_style_gtk
-        w.set_theme(@theme)
+        w.apply_theme(@theme)
       end
     end
 

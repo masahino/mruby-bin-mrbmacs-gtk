@@ -15,8 +15,10 @@ module Mrbmacs
       compute_area
       set_style_gtk
       set_margin
+      @sci.sci_set_margin_maskn(MARGIN_LINE_NUMBER, ~Scintilla::SC_MASK_FOLDERS)
+
       if @theme != nil
-        set_theme(@theme)
+        apply_theme(@theme)
       end
     end
 
@@ -57,11 +59,14 @@ module Mrbmacs
       @sci.sci_marker_set_fore(Scintilla::SC_MARKNUM_FOLDERMIDTAIL, 0xffffff)
       @sci.sci_marker_set_back(Scintilla::SC_MARKNUM_FOLDERMIDTAIL, 0x000000)
       @sci.sci_set_indentation_guides(Scintilla::SC_IV_LOOKBOTH)
+      (21..24).each do |i|
+        @sci.sci_marker_define(i, Scintilla::SC_MARK_BAR)
+      end
     end
 
-    def set_theme(theme)
+    def apply_theme(theme)
       @theme = theme
-      set_theme_base(theme)
+      apply_theme_base(theme)
       @sci.sci_set_fold_margin_colour(true, theme.background_color)
       @sci.sci_set_fold_margin_hicolour(true, theme.foreground_color)
       for n in 25..31
