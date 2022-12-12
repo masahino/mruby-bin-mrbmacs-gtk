@@ -1,4 +1,5 @@
 module Mrbmacs
+  # ApplicationGtk
   class ApplicationGtk < Application
     def read_dir_name(prompt, default_directory = nil)
       @frame.select_directory(prompt, default_directory)
@@ -33,7 +34,7 @@ module Mrbmacs
           open_file(filename)
           new_buffer.docpointer = @frame.view_win.sci_get_docpointer
           @frame.apply_theme(@theme)
-          @keymap.set_keymap(@frame.view_win)
+          apply_keymap(@frame.view_win, @keymap)
           @frame.view_win.sci_set_lexer_language(@current_buffer.mode.lexer)
           @current_buffer.mode.set_style(@frame.view_win, @theme)
           @frame.set_buffer_name(@current_buffer.name)
