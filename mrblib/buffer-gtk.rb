@@ -13,7 +13,7 @@ module Mrbmacs
       @frame.view_win = edit_win.sci
       @buffer_list.push(@buffer_list.delete(new_buffer))
       #     @frame.view_win.sci_set_lexer_language(@current_buffer.mode.name)
-      @current_buffer.mode.set_style(@frame.view_win, @theme)
+      apply_theme_to_mode(@current_buffer.mode, @frame.edit_win, @theme)
       #      @frame.view_win.sci_goto_pos(@current_buffer.pos)
       @frame.sync_tab(@current_buffer.name)
       @frame.modeline(self)

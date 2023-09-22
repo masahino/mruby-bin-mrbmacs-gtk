@@ -1,7 +1,5 @@
 module Mrbmacs
   class ApplicationGtk < Application
-    include Scintilla
-
     def add_buffer_to_frame(buffer)
       @frame.add_new_tab(buffer)
       @frame.view_win.sci_set_identifier(@frame.edit_win_list.index(@frame.edit_win))
@@ -46,6 +44,7 @@ module Mrbmacs
       #      if keyval < 256
       if input_str != ''
         key_str += input_str
+        add_recent_key(mod_str + input_str)
         command = key_scan(key_str)
         if command != nil
           if command.is_a?(Integer)
@@ -77,7 +76,7 @@ module Mrbmacs
       font = @frame.select_font
       if font != nil
         @frame.set_font(font[0], font[1])
-        @current_buffer.mode.set_style(@frame.view_win, @theme)
+        @current_buffer.mode.apply_theme(@frame.view_win, @theme)
       end
     end
   end

@@ -36,7 +36,7 @@ module Mrbmacs
           @frame.apply_theme(@theme)
           apply_keymap(@frame.view_win, @keymap)
           @frame.view_win.sci_set_lexer_language(@current_buffer.mode.lexer)
-          @current_buffer.mode.set_style(@frame.view_win, @theme)
+          apply_theme_to_mode(@current_buffer.mode, @frame.edit_win, @theme)
           @frame.set_buffer_name(@current_buffer.name)
           @frame.edit_win.buffer = @current_buffer
           @frame.modeline(self)
