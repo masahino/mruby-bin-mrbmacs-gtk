@@ -37,7 +37,11 @@ jobs:
       MRUBY_CONFIG: ci/gcc-clang
       CC: clang
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - name: install gtk
+        run: |
+          brew update
+          brew install gtk+3 gtk-mac-integration
       - name: Ruby version
         run: ruby -v
       - name: Compiler version
