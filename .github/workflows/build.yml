@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2.4.0
       - name: install packages
-        run: sudo apt-get install libgtk-3-dev
+        run: sudo apt-get install libgtk-3-dev xvfb
       - name: Ruby version
         run: ruby -v
       - name: Compiler version
@@ -25,10 +25,8 @@ jobs:
         with:
           name: mrbmacs-gtk
           path: mruby/bin/mrbmacs-gtk
-      - name: Setup faketty
-        uses: Yuri6037/Action-FakeTTY@v1.1
       - name: Test
-        run: faketty ./build.sh test
+        run: xvfb-run ./build.sh test
 
   macOS:
     runs-on: macos-latest
