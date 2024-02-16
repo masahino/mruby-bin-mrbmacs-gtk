@@ -30,7 +30,7 @@ jobs:
 
   macOS:
     runs-on: macos-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     env:
       MRUBY_CONFIG: ci/gcc-clang
       CC: clang
@@ -56,51 +56,6 @@ jobs:
       - name: Test
         run: faketty ./build.sh test
 
-  Windows-Cygwin:
-    runs-on: windows-latest
-    timeout-minutes: 15
-    env:
-      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
-      CC: gcc
-      installer-path: '%TMP%\cygwin-setup.exe'
-      cygwin-root: C:\cygwin
-      package-dir: C:\cygwin-package
-      cache-version: v1
-    steps:
-      - uses: actions/checkout@v2.4.0
-      - uses: actions/cache@v2.1.7
-        with:
-          path: ${{ env.package-dir }}
-          key: ${{ runner.os }}-cygwin-${{ env.cache-version }}
-      - name: Download Cygwin installer
-        shell: cmd
-        run: >
-          bitsadmin /transfer download /priority foreground
-          https://cygwin.com/setup-x86_64.exe ${{ env.installer-path }}
-      - name: Install Cygwin
-        shell: cmd
-        run: >
-          ${{ env.installer-path }}
-          --quiet-mode --no-shortcuts --no-startmenu --no-desktop --no-admin
-          --only-site --site http://mirrors.kernel.org/sourceware/cygwin/
-          --root ${{ env.cygwin-root }}
-          --local-package-dir ${{ env.package-dir }}
-          --packages gcc-core,gcc-g++,ruby,libonig-devel,make,git,libiconv-devel,libgtk3-devel
-      - name: Set PATH for Cygwin
-        run: |
-          echo '::set-env name=PATH::${{ env.cygwin-root }}\bin;${{ env.cygwin-root }}\usr\bin'
-      - name: Ruby version
-        shell: cmd
-        run: ruby -v
-      - name: Compiler version
-        run: ${{ env.CC }} --version
-      - name: Build and test
-        shell: cmd
-        run: bash -o igncr build.sh
-      - name: Set PATH for cache archiving (tar)
-        # set Windows path so that Cygwin tar is not used for cache archiving
-        run: echo '::set-env name=PATH::C:\windows\System32'
-
   Windows-mingw:
     runs-on: windows-latest
     timeout-minutes: 10
@@ -108,10 +63,27 @@ jobs:
         MRUBY_CONFIG: ci/gcc-clang
         CC: gcc
     steps:
-        - uses: actions/checkout@v3
-        - name: Ruby version
-          run: ruby -v
-        - name: Compiler version
-          run: ${{ env.CC }} --version
-        - name: Build and test
-          run: ./build.sh
+      - uses: actions/checkout@v4
+      - name: mingw setup
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-ruby
+            mingw-w64-x86_64-libiconv
+            mingw-w64-x86_64-libtool
+            mingw-w64-x86_64-pkg-config
+            mingw-w64-x86_64-gtk3
+            mingw-w64-x86_64-glib2
+            git
+            make
+            patch
+            libtool
+      - name: Ruby version
+        run: ruby -v
+      - name: Compiler version
+        run: ${{ env.CC }} --version
+      - name: Build and test
+        run: ./build.sh
