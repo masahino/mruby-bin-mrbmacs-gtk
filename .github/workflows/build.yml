@@ -21,7 +21,7 @@ jobs:
       - name: Build
         run: ./build.sh
       - name: upload
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: mrbmacs-gtk
           path: mruby/bin/mrbmacs-gtk
@@ -47,7 +47,7 @@ jobs:
       - name: Build
         run: ./build.sh
       - name: upload
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: mrbmacs-gtk
           path: mruby/bin/mrbmacs-gtk
