@@ -11,7 +11,7 @@ jobs:
       TERM: xterm
       CC: gcc
     steps:
-      - uses: actions/checkout@v5.0.1
+      - uses: actions/checkout@v6.0.0
       - name: install packages
         run: sudo apt-get install libgtk-3-dev xvfb
       - name: Ruby version
@@ -35,7 +35,7 @@ jobs:
       MRUBY_CONFIG: ci/gcc-clang
       CC: clang
     steps:
-      - uses: actions/checkout@v5.0.1
+      - uses: actions/checkout@v6.0.0
       - name: install gtk
         run: |
           brew update
@@ -63,7 +63,7 @@ jobs:
         MRUBY_CONFIG: ci/gcc-clang
         CC: gcc
     steps:
-      - uses: actions/checkout@v5.0.1
+      - uses: actions/checkout@v6.0.0
       - name: mingw setup
         uses: msys2/setup-msys2@v2
         with:
