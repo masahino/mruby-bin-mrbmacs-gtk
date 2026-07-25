@@ -15,7 +15,7 @@ module Mrbmacs
       compute_area
       set_style_gtk
       set_margin
-      @sci.sci_set_margin_maskn(MARGIN_LINE_NUMBER, ~Scintilla::SC_MASK_FOLDERS)
+      @sci.sci_set_margin_maskn(MARGIN_LINE_NUMBER, MARKERMASK_LINE_NUMBER)
 
       if @theme != nil
         apply_theme(@theme)
