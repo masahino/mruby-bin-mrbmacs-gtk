@@ -13,7 +13,6 @@
 #include "mruby/string.h"
 
 #include <Scintilla.h>
-#include <SciLexer.h>
 #define PLAT_GTK 1
 #include <ScintillaWidget.h>
 

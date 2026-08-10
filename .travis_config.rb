@@ -1,3 +1,11 @@
+class MRuby::Build
+  # mruby 3.3+ splits core objects into libmruby_core.a, but gem binaries
+  # in this project still expect both archives to be linked.
+  def libraries
+    [libmruby_static, libmruby_core_static]
+  end
+end
+
 MRuby::Build.new do |conf|
   # load specific toolchain settings
 
@@ -15,11 +23,19 @@ MRuby::Build.new do |conf|
 
   conf.gembox 'default'
   conf.gem :github => 'masahino/mruby-mrbmacs-lsp'
+  conf.gem github: 'masahino/mruby-lsp-client' do |gem|
+    gem.skip_test = true
+  end
   #conf.gem :github => 'masahino/mruby-mrbmacs-themes-base16', :branch => 'main'
   conf.gem :github => 'mattn/mruby-iconv' do |g|
     if RUBY_PLATFORM.include?('linux')
       g.linker.libraries.delete 'iconv'
     end
+    g.skip_test = true
+  end
+
+  conf.gem github: 'iij/mruby-regexp-pcre' do |gem|
+    gem.skip_test = true
   end
 
   conf.gem :github => 'masahino/mruby-scintilla-gtk' do |g|
