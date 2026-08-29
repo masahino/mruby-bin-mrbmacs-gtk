@@ -7,7 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      MRUBY_CONFIG: ci/gcc-clang
       TERM: xterm
       CC: gcc
     steps:
@@ -19,20 +18,19 @@ jobs:
       - name: Compiler version
         run: ${{ env.CC }} --version
       - name: Build
-        run: ./build.sh
+        run: rake
       - name: upload
         uses: actions/upload-artifact@v7
         with:
           name: mrbmacs-gtk
           path: mruby/bin/mrbmacs-gtk
       - name: Test
-        run: xvfb-run ./build.sh test
+        run: xvfb-run rake test
 
   macOS:
     runs-on: macos-latest
     timeout-minutes: 20
     env:
-      MRUBY_CONFIG: ci/gcc-clang
       CC: clang
     steps:
       - uses: actions/checkout@v7.0.1
@@ -45,7 +43,7 @@ jobs:
       - name: Compiler version
         run: ${{ env.CC }} --version
       - name: Build
-        run: ./build.sh
+        run: rake
       - name: upload
         uses: actions/upload-artifact@v7
         with:
@@ -54,13 +52,12 @@ jobs:
       - name: Setup faketty
         uses: Yuri6037/Action-FakeTTY@v1.1
       - name: Test
-        run: faketty ./build.sh test
+        run: faketty rake test
 
   Windows-mingw:
     runs-on: windows-latest
     timeout-minutes: 10
     env:
-        MRUBY_CONFIG: ci/gcc-clang
         CC: gcc
     steps:
       - uses: actions/checkout@v7.0.1
@@ -86,4 +83,4 @@ jobs:
       - name: Compiler version
         run: ${{ env.CC }} --version
       - name: Build and test
-        run: ./build.sh
+        run: rake test
