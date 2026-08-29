@@ -9,6 +9,8 @@ module Mrbmacs
       @y1 = y1
       @width = width
       @height = height
+      @x2 = x1 + width - 1
+      @y2 = y1 + height - 1
       @sci = Scintilla::ScintillaGtk.new
       set_callback
       setup_sci_default
@@ -84,6 +86,10 @@ module Mrbmacs
       @sci.sci_style_set_size Scintilla::STYLE_DEFAULT, size
       font_width = @sci.sci_text_width Scintilla::STYLE_DEFAULT, 'A'
       font_height = @sci.sci_text_height 1
+    end
+
+    def focus_out
+      @sci.sci_set_focus(false)
     end
   end
 end

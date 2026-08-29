@@ -55,7 +55,6 @@ scintilla_echo_window_new(mrb_state *mrb, mrb_value self)
     mrb_module_get(mrb, "Scintilla"), "ScintillaGtk");
 
   echo = mrb_funcall(mrb, mrb_obj_value(scintilla_gtk_class), "new", 0);
-
   mrb_funcall(mrb, echo, "sci_style_set_font",
     2, mrb_fixnum_value(STYLE_DEFAULT),
     mrb_str_new_lit(mrb, "Monospace"));
@@ -146,10 +145,10 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   mrb_value view, echo;
   mrb_value buffer, edit_win;
   mrb_value edit_win_list;
+  mrb_int width = 0, height = 0;
 
   mrbmacs_module = mrb_module_get(mrb, "Mrbmacs");
-
-  mrb_get_args(mrb, "o", &buffer);
+  mrb_get_args(mrb, "oii", &buffer, &width, &height);
 
   struct mrb_mrbmacs_frame_data *fdata =
   (struct mrb_mrbmacs_frame_data *)mrb_malloc(mrb, sizeof(struct mrb_mrbmacs_frame_data));
@@ -240,7 +239,6 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   gtk_window_set_default_size(GTK_WINDOW(mainwin),
     edit_win_get_width(mrb, edit_win) + 2,
     edit_win_get_height(mrb, edit_win) + 90); // 112
-
   gtk_widget_show_all(mainwin);
 
 #ifdef MAC_INTEGRATION
@@ -267,7 +265,7 @@ mrb_mrbmacs_gtk_frame_init(mrb_state *mrb)
   frame = mrb_class_get_under(mrb, mrbmacs_module, "Frame");
 
   mrb_define_method(mrb, frame, "frame_gtk_init",
-    mrb_mrbmacs_frame_init, MRB_ARGS_REQ(1));
+    mrb_mrbmacs_frame_init, MRB_ARGS_REQ(3));
   mrb_define_method(mrb, frame, "set_mode_text",
     mrb_mrbmacs_frame_set_mode_text, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, frame, "echo_puts",
