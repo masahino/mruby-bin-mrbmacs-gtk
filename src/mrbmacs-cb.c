@@ -76,7 +76,15 @@ mrbmacs_sci_notify(GtkWidget *widget, gint n, SCNotification *notification, gpoi
   mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "modification_type"),
     mrb_fixnum_value(notification->modificationType));
   // const char *text
-  mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "text"), mrb_str_new_cstr(mrb, notification->text));
+  if (notification->text == NULL) {
+    mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "text"), mrb_nil_value());
+  } else if (notification->nmhdr.code == SCN_MODIFIED) {
+    mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "text"),
+      mrb_str_new(mrb, notification->text, notification->length));
+  } else {
+    mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "text"),
+      mrb_str_new_cstr(mrb, notification->text));
+  }
   // Sci_Position length
   mrb_hash_set(mrb, scn, mrb_str_new_cstr(mrb, "length"), mrb_fixnum_value(notification->length));
   // Sci_Position linesAdded
