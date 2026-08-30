@@ -9,3 +9,4 @@
 # local dev / LSP tooling
 /.rubocop.yml
 /Brewfile
+/compile_commands.json
