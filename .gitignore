@@ -5,3 +5,7 @@
 *.log
 *.app/
 .DS_Store
+
+# local dev / LSP tooling
+/.rubocop.yml
+/Brewfile
