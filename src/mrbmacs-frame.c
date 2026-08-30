@@ -20,7 +20,7 @@
 #include "mrbmacs-search-replace.h"
 #include "mrbmacs-select.h"
 #include "mrbmacs-tab.h"
-#include "mrbmacs-dialog.h"
+#include "mrbmacs-echo.h"
 #include "mrbmacs-window.h"
 #include "mrbmacs-cb.h"
 #include "mrbmacs-menu.h"
@@ -28,20 +28,6 @@
 static const struct mrb_data_type mrb_mrbmacs_frame_data_type = {
   "mrb_mrbmacs_frame_data", mrb_free,
 };
-
-static mrb_value
-mrb_mrbmacs_frame_echo_puts(mrb_state *mrb, mrb_value self)
-{
-  char *message;
-  guint message_id;
-  struct mrb_mrbmacs_frame_data *fdata = (struct mrb_mrbmacs_frame_data *)DATA_PTR(self);
-
-  mrb_get_args(mrb, "z", &message);
-  message_id = gtk_statusbar_push(GTK_STATUSBAR(fdata->status_bar),
-    gtk_statusbar_get_context_id(GTK_STATUSBAR(fdata->status_bar),""),
-    message);
-  return mrb_fixnum_value(message_id);
-}
 
 static mrb_value
 scintilla_echo_window_new(mrb_state *mrb, mrb_value self)
@@ -208,6 +194,7 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
 //  gtk_box_pack_start(GTK_BOX(vbox), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL), FALSE, TRUE, 0);
 
   echo = scintilla_echo_window_new(mrb, self);
+  gtk_box_pack_start(GTK_BOX(vbox), (GtkWidget *)DATA_PTR(echo), FALSE, FALSE, 0);
 
   mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@echo_win"), echo);
 
@@ -223,10 +210,6 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   mrb_funcall(mrb, echo, "sci_set_focus", 1, mrb_false_value());
   //set_default_style
 
-  gtk_box_pack_start(GTK_BOX(vbox), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL), FALSE, FALSE, 0);
-  fdata->status_bar = gtk_statusbar_new();
-  gtk_box_pack_end(GTK_BOX(vbox), fdata->status_bar, FALSE, FALSE, 0);
-
 /*
   gint w_w, w_h;
   gtk_window_get_size(GTK_WINDOW(mainwin), &w_w, &w_h);
@@ -239,6 +222,11 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   gtk_window_set_default_size(GTK_WINDOW(mainwin),
     edit_win_get_width(mrb, edit_win) + 2,
     edit_win_get_height(mrb, edit_win) + 90); // 112
+
+  /* Open on the monitor under the pointer (i.e. where it was launched from)
+     rather than wherever the GdkQuartz default places it. Window stacking on
+     macOS is left as-is. */
+  gtk_window_set_position(GTK_WINDOW(mainwin), GTK_WIN_POS_MOUSE);
   gtk_widget_show_all(mainwin);
 
 #ifdef MAC_INTEGRATION
@@ -268,12 +256,10 @@ mrb_mrbmacs_gtk_frame_init(mrb_state *mrb)
     mrb_mrbmacs_frame_init, MRB_ARGS_REQ(3));
   mrb_define_method(mrb, frame, "set_mode_text",
     mrb_mrbmacs_frame_set_mode_text, MRB_ARGS_REQ(1));
-  mrb_define_method(mrb, frame, "echo_puts",
-    mrb_mrbmacs_frame_echo_puts, MRB_ARGS_REQ(1));
 
   mrb_mrbmacs_gtk_frame_search_init(mrb);
   mrb_mrbmacs_gtk_frame_select_init(mrb);
   mrb_mrbmacs_gtk_frame_tab_init(mrb);
-  mrb_mrbmacs_gtk_frame_dialog_init(mrb);
+  mrb_mrbmacs_gtk_frame_echo_init(mrb);
   mrb_mrbmacs_gtk_window_init(mrb);
 }

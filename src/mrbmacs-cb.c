@@ -17,6 +17,7 @@
 #include <Scintilla.h>
 
 #include "mrbmacs-frame.h"
+#include "mrbmacs-echo.h"
 
 extern mrb_state *mrb;
 
@@ -48,6 +49,12 @@ mrbmacs_keypress(GtkWidget *widget, GdkEventKey *event, gpointer data)
   mrb_value send_key;
   mrb_value app;
   app = *(mrb_value *)data;
+
+  if (mrbmacs_echo_active) {
+    /* consumed as a prompt control key -> stop propagation;
+       otherwise let it reach the focused echo widget */
+    return mrbmacs_echo_handle_key(event->state, event->keyval) ? TRUE : FALSE;
+  }
 
   send_key = mrb_funcall(mrb, app, "key_press", 2, mrb_fixnum_value(event->state),
     mrb_fixnum_value(event->keyval));

@@ -13,7 +13,6 @@ struct mrb_mrbmacs_frame_data {
   GtkWidget *replace_next_button;
   GtkWidget *replace_prev_button;
   GtkWidget *notebook;
-  GtkWidget *status_bar;
   GtkWidget *menu;
 };
 
