@@ -51,7 +51,8 @@ scintilla_echo_window_new(mrb_state *mrb, mrb_value self)
       mrb_fixnum_value(STYLE_DEFAULT), mrb_str_new_lit(mrb, "A")));
   font_height = mrb_int(mrb, mrb_funcall(mrb, echo, "sci_text_height", 1, mrb_fixnum_value(1)));
 
-  gtk_widget_set_size_request((GtkWidget*)DATA_PTR(echo), font_width*80, font_height);
+  /* Keep in step with Frame::INITIAL_COLUMNS (mrblib/frame-gtk.rb). */
+  gtk_widget_set_size_request((GtkWidget*)DATA_PTR(echo), font_width*120, font_height);
 
   mrb_funcall(mrb, echo, "sci_set_hscroll_bar", 1, mrb_false_value());
   mrb_funcall(mrb, echo, "sci_clear_cmd_key", 1, mrb_fixnum_value(SCK_RETURN));

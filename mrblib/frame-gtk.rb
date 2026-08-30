@@ -1,9 +1,14 @@
 module Mrbmacs
   class Frame
+    # Initial editor grid, shared with the Cocoa frontend so the two GUI
+    # frontends open at the same size (landscape, ~1.4:1).
+    INITIAL_COLUMNS = 120
+    INITIAL_LINES = 40
+
     attr_accessor :mainwin
 
     def initialize(buffer)
-      frame_gtk_init(buffer, 80, 40)
+      frame_gtk_init(buffer, INITIAL_COLUMNS, INITIAL_LINES)
       #      set_style_gtk
       #      @edit_win.set_sci_default
       #      @edit_win.set_margin
