@@ -4,6 +4,13 @@ module Mrbmacs
     def add_buffer_to_frame(buffer)
       @frame.add_new_tab(buffer)
       @frame.view_win.sci_set_identifier(@frame.edit_win_list.index(@frame.edit_win))
+      # GTK builds a fresh Scintilla widget for every tab, so each new buffer's
+      # view needs the same theme and Scintilla cmdkey bindings that
+      # init_theme / init_keymap gave the first one. The per-pane frontends
+      # get this for free; base find_file / create_new_buffer only style the
+      # mode on top.
+      @frame.edit_win.apply_theme(@theme) unless @theme.nil?
+      apply_keymap(@frame.view_win, @keymap) unless @keymap.nil?
     end
 
     def sci_notify(notify)
