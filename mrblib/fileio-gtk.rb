@@ -22,6 +22,8 @@ module Mrbmacs
         filename = read_file_name('find file: ', dir)
         @frame.modeline_refresh(self)
       end
+      return if !filename.nil? && reject_directory_for_find_file(filename)
+
       if filename != nil
         if Mrbmacs.get_buffer_from_path(@buffer_list, filename) != nil
           switch_to_buffer(Mrbmacs.get_buffer_from_path(@buffer_list, filename).name)
