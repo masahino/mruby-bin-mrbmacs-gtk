@@ -61,20 +61,8 @@ mrb_mrbmacs_window_set_callback(mrb_state *mrb, mrb_value self)
 mrb_value
 mrb_mrbmacs_window_compute_area(mrb_state *mrb, mrb_value self)
 {
-  int font_width, font_height;
-  mrb_value view;
-  mrb_int width, height;
-  width = mrb_fixnum(mrb_iv_get(mrb, self, mrb_intern_cstr(mrb, "@width")));
-  height = mrb_fixnum(mrb_iv_get(mrb, self, mrb_intern_cstr(mrb, "@height")));
-
-  view = mrb_iv_get(mrb, self, mrb_intern_cstr(mrb, "@sci"));
-
-  font_width = mrb_int(mrb, mrb_funcall(mrb, view, "sci_text_width", 2,
-      mrb_fixnum_value(STYLE_DEFAULT), mrb_str_new_lit(mrb, "A")));
-  font_height = mrb_int(mrb, mrb_funcall(mrb, view, "sci_text_height", 1, mrb_fixnum_value(1)));
-//  gtk_widget_set_size_request((GtkWidget *)DATA_PTR(view), font_width*(width + 6), font_height*height);
-
-  return view;
+  /* Sizing is handled by the GTK container, not by character-grid math. */
+  return mrb_iv_get(mrb, self, mrb_intern_cstr(mrb, "@sci"));
 }
 
 void
