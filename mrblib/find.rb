@@ -18,6 +18,7 @@ module Mrbmacs
           $stderr.printf "not matched start = %d, end =%d\n", @target_start_pos, @target_end_pos
           @target_start_pos = 0
         end
+        search_highlight_begin(search_text)
       end
     end
 
@@ -38,7 +39,7 @@ module Mrbmacs
     end
 
     def finish_isearch
-      $stderr.puts 'finish isearch'
+      search_highlight_end
       @frame.view_win.sci_grab_focus
       @frame.view_win.sci_goto_pos(@frame.view_win.sci_get_selection_end)
     end
