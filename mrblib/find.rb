@@ -19,6 +19,7 @@ module Mrbmacs
           @target_start_pos = 0
         end
         search_highlight_begin(search_text)
+        @frame.modeline(self)
       end
     end
 
@@ -40,6 +41,7 @@ module Mrbmacs
 
     def finish_isearch
       search_highlight_end
+      @frame.modeline(self)
       @frame.view_win.sci_grab_focus
       @frame.view_win.sci_goto_pos(@frame.view_win.sci_get_selection_end)
     end

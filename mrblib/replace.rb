@@ -8,7 +8,8 @@ module Mrbmacs
         if query == true
           @frame.view_win.sci_set_sel(@frame.view_win.sci_get_target_start,
                                       @frame.view_win.sci_get_target_end)
-          search_highlight_begin(str)
+          search_highlight_begin(str, :replace)
+          @frame.modeline(self)
           case @frame.y_or_n("Query replacing #{str} with #{newstr}:")
           when true
             @frame.view_win.sci_replace_target(newstr.length, newstr)
@@ -24,6 +25,7 @@ module Mrbmacs
       end
       @frame.view_win.sci_end_undo_action
       search_highlight_end
+      @frame.modeline(self)
     end
 
     def query_replace
