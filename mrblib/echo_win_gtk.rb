@@ -14,6 +14,10 @@ module Mrbmacs
       )
       (0..2).each { |margin| @echo_win.sci_set_margin_widthn(margin, 0) }
       @echo_win.sci_set_margin_typen(3, Scintilla::SC_MARGIN_TEXT)
+      # so echo_sci_notify sees the pattern being typed during isearch
+      @echo_win.sci_set_mod_event_mask(
+        Scintilla::SC_MOD_INSERTTEXT | Scintilla::SC_MOD_DELETETEXT
+      )
     end
   end
 end

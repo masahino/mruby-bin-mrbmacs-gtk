@@ -78,6 +78,52 @@ module Mrbmacs
       @echo_win.sci_margin_set_text(0, prompt)
     end
 
+    # --- non-modal echo prompts (isearch / query-replace) ---------------
+    # The pattern is edited directly in @echo_win while the frame is in
+    # echo_key_mode; control keys go through ApplicationGtk#echo_key.
+
+    def start_isearch(prompt)
+      @echo_win.sci_clear_all
+      echo_set_prompt(prompt)
+      @echo_win.sci_grab_focus
+      echo_key_mode(true)
+    end
+
+    def update_isearch_prompt(prompt)
+      echo_set_prompt(prompt)
+    end
+
+    def set_isearch_text(text)
+      @echo_win.sci_clear_all
+      @echo_win.sci_add_text(text.bytesize, text)
+      @echo_win.sci_document_end
+    end
+
+    def finish_isearch
+      echo_key_mode(false)
+      @echo_win.sci_clear_all
+      echo_set_prompt('')
+      @echo_win.sci_add_text(1, ' ')
+      @echo_win.sci_clear_all
+      @view_win.sci_grab_focus
+    end
+
+    def start_query_replace(prompt)
+      @echo_win.sci_clear_all
+      echo_set_prompt(prompt)
+      @echo_win.sci_grab_focus
+      echo_key_mode(true)
+    end
+
+    def finish_query_replace
+      echo_key_mode(false)
+      @echo_win.sci_clear_all
+      echo_set_prompt('')
+      @echo_win.sci_add_text(1, ' ')
+      @echo_win.sci_clear_all
+      @view_win.sci_grab_focus
+    end
+
     def echo_gets(prompt, text = '', &block)
       @echo_win.sci_clear_all
       echo_set_prompt(prompt)

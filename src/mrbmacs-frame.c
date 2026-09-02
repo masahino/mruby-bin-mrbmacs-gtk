@@ -17,7 +17,6 @@
 #include <ScintillaWidget.h>
 
 #include "mrbmacs-frame.h"
-#include "mrbmacs-search-replace.h"
 #include "mrbmacs-select.h"
 #include "mrbmacs-tab.h"
 #include "mrbmacs-echo.h"
@@ -57,6 +56,10 @@ scintilla_echo_window_new(mrb_state *mrb, mrb_value self)
   mrb_funcall(mrb, echo, "sci_set_hscroll_bar", 1, mrb_false_value());
   mrb_funcall(mrb, echo, "sci_clear_cmd_key", 1, mrb_fixnum_value(SCK_RETURN));
 
+  /* Text changes here drive isearch / query-replace. */
+  g_signal_connect(G_OBJECT((GtkWidget *)DATA_PTR(echo)),
+    "sci-notify", G_CALLBACK(mrbmacs_echo_sci_notify), NULL);
+
   return echo;
 }
 
@@ -73,48 +76,6 @@ mrb_mrbmacs_frame_set_mode_text(mrb_state *mrb, mrb_value self)
   return self;
 }
 
-
-static GtkWidget*
-create_search_bar(struct mrb_mrbmacs_frame_data *fdata, gboolean replace)
-{
-  GtkWidget *search_bar;
-  GtkWidget *entry;
-  GtkWidget *next_button, *prev_button;
-  GtkWidget *box;
-
-  entry = gtk_search_entry_new();
-  if (replace == TRUE) {
-    gtk_entry_set_icon_from_icon_name(GTK_ENTRY(entry), GTK_ENTRY_ICON_PRIMARY,"edit-find-replace");
-  }
-
-  box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-  gtk_widget_set_halign(box, GTK_ALIGN_START);
-  gtk_box_pack_start(GTK_BOX(box), entry, FALSE, FALSE, 0);
-  search_bar = gtk_search_bar_new();
-  gtk_container_set_border_width(GTK_CONTAINER(search_bar), 0);
-  gtk_search_bar_connect_entry(GTK_SEARCH_BAR(search_bar), GTK_ENTRY(entry));
-  gtk_search_bar_set_search_mode(GTK_SEARCH_BAR(search_bar), FALSE);
-  gtk_search_bar_set_show_close_button(GTK_SEARCH_BAR(search_bar), TRUE);
-
-  next_button = gtk_button_new_from_icon_name("go-down-symbolic", GTK_ICON_SIZE_BUTTON);
-  gtk_box_pack_start(GTK_BOX(box), next_button, FALSE, FALSE, 0);
-  prev_button = gtk_button_new_from_icon_name("go-up-symbolic", GTK_ICON_SIZE_BUTTON);
-  gtk_box_pack_start(GTK_BOX(box), prev_button, FALSE, FALSE, 0);
-  gtk_container_add(GTK_CONTAINER(search_bar), box);
-
-  if (replace == FALSE) {
-    fdata->search_bar = search_bar;
-    fdata->search_entry = entry;
-    fdata->find_next_button = next_button;
-    fdata->find_prev_button = prev_button;
-  } else {
-    fdata->replace_bar = search_bar;
-    fdata->replace_entry = entry;
-    fdata->replace_next_button = next_button;
-    fdata->replace_prev_button = prev_button;
-  }
-  return search_bar;
-}
 
 static mrb_value
 mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
@@ -199,11 +160,6 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
 
   mrb_iv_set(mrb, self, mrb_intern_cstr(mrb, "@echo_win"), echo);
 
-  // search & replace
-  gtk_box_pack_start(GTK_BOX(vbox), create_search_bar(fdata, FALSE), FALSE, FALSE, 0);
-  gtk_box_pack_start(GTK_BOX(vbox), create_search_bar(fdata, TRUE), FALSE, FALSE, 0);
-//  gtk_box_pack_start(GTK_BOX(vbox),   create_search_box(fdata), FALSE, FALSE, 0);
-
   DATA_PTR(self) = fdata;
 
 //  mrb_funcall(mrb, self, "set_style_gtk", 0);
@@ -258,7 +214,6 @@ mrb_mrbmacs_gtk_frame_init(mrb_state *mrb)
   mrb_define_method(mrb, frame, "set_mode_text",
     mrb_mrbmacs_frame_set_mode_text, MRB_ARGS_REQ(1));
 
-  mrb_mrbmacs_gtk_frame_search_init(mrb);
   mrb_mrbmacs_gtk_frame_select_init(mrb);
   mrb_mrbmacs_gtk_frame_tab_init(mrb);
   mrb_mrbmacs_gtk_frame_echo_init(mrb);

@@ -50,91 +50,6 @@ mrbmacs_io_read_cb(GIOChannel *source, GIOCondition condition, gpointer data)
   return TRUE;
 }
 
-static gboolean
-mrbmacs_replace_next_button_press(GtkWidget *widget, GdkEventButton *event, gpointer user_data)
-{
-  mrb_value ret;
-  ret = mrb_funcall(mrb, *(mrb_value *)user_data, "replace_forward", 0);
-  return FALSE;
-}
-
-static gboolean
-mrbmacs_replace_prev_button_press(GtkWidget *widget, GdkEventButton *event, gpointer user_data)
-{
-  mrb_value ret;
-  ret = mrb_funcall(mrb, *(mrb_value *)user_data, "replace_backward", 0);
-  return FALSE;
-}
-
-static gboolean
-mrbmacs_find_next_button_press(GtkWidget *widget, GdkEventButton *event, gpointer user_data)
-{
-  mrb_value ret;
-  ret = mrb_funcall(mrb, *(mrb_value *)user_data, "isearch_forward", 0);
-  return FALSE;
-}
-
-static gboolean
-mrbmacs_find_prev_button_press(GtkWidget *widget, GdkEventButton *event, gpointer user_data)
-{
-  mrb_value ret;
-  ret = mrb_funcall(mrb, *(mrb_value *)user_data, "isearch_backward", 0);
-  return FALSE;
-}
-
-static gboolean
-mrbmacs_search_entry_changed(GtkSearchEntry *widget, gpointer user_data)
-{
-  mrb_value ret;
-  mrb_value frame_obj;
-  struct mrb_mrbmacs_frame_data *frame;
-  mrb_value app;
-
-  app = *(mrb_value *)user_data;
-  frame_obj = mrb_iv_get(mrb, app, mrb_intern_lit(mrb, "@frame"));
-  frame = (struct mrb_mrbmacs_frame_data *)DATA_PTR(frame_obj);
-
-  ret = mrb_funcall(mrb, app, "isearch", 0);
-  return FALSE;
-}
-
-static gboolean
-mrbmacs_search_entry_activate(GtkSearchEntry *widget, gpointer user_data)
-{
-  fprintf(stderr, "search entry activate\n");
-  mrb_value frame_obj;
-  struct mrb_mrbmacs_frame_data *frame;
-  mrb_value app;
-
-  app = *(mrb_value *)user_data;
-  frame_obj = mrb_iv_get(mrb, app, mrb_intern_lit(mrb, "@frame"));
-  frame = (struct mrb_mrbmacs_frame_data *)DATA_PTR(frame_obj);
-  if (gtk_search_bar_get_search_mode(GTK_SEARCH_BAR(frame->replace_bar)) == TRUE) {
-    gtk_widget_grab_focus(GTK_WIDGET(frame->replace_entry));
-  } else {
-    gtk_search_bar_set_search_mode(GTK_SEARCH_BAR(frame->search_bar), FALSE);
-    mrb_funcall(mrb, app, "finish_isearch", 0);
-  }
-  return FALSE;
-}
-
-static gboolean
-mrbmacs_replace_entry_activate(GtkSearchEntry *widget, gpointer user_data)
-{
-  fprintf(stderr, "replace entry activate\n");
-  mrb_value frame_obj;
-  struct mrb_mrbmacs_frame_data *frame;
-  mrb_value app;
-
-  app = *(mrb_value *)user_data;
-  frame_obj = mrb_iv_get(mrb, app, mrb_intern_lit(mrb, "@frame"));
-  frame = (struct mrb_mrbmacs_frame_data *)DATA_PTR(frame_obj);
-  mrb_funcall(mrb, app, "replace_forward", 0);
-
-  return FALSE;
-}
-
-
 static mrb_value
 mrb_mrbmacs_editloop(mrb_state *mrb, mrb_value self)
 {
@@ -152,27 +67,6 @@ mrb_mrbmacs_editloop(mrb_state *mrb, mrb_value self)
 //  g_signal_connect(G_OBJECT((GtkWidget *)DATA_PTR(frame->view_win)),
   g_signal_connect(G_OBJECT(frame->mainwin),
     "key-press-event", G_CALLBACK(mrbmacs_keypress), &self);
-//  g_signal_connect(G_OBJECT((GtkWidget *)DATA_PTR(frame->view_win)),
-//    "sci-notify", G_CALLBACK(mrbmacs_sci_notify), &self);
-
-  // find button
-  g_signal_connect(G_OBJECT(frame->find_next_button),
-    "button-press-event", G_CALLBACK(mrbmacs_find_next_button_press), &self);
-  g_signal_connect(G_OBJECT(frame->find_prev_button),
-    "button-press-event", G_CALLBACK(mrbmacs_find_prev_button_press), &self);
-  // search entry
-  g_signal_connect(G_OBJECT(frame->search_entry),
-    "search-changed", G_CALLBACK(mrbmacs_search_entry_changed), &self);
-  g_signal_connect(G_OBJECT(frame->search_entry),
-    "activate", G_CALLBACK(mrbmacs_search_entry_activate), &self);
-
-  // replace button
-  g_signal_connect(G_OBJECT(frame->replace_next_button),
-    "button-press-event", G_CALLBACK(mrbmacs_replace_next_button_press), &self);
-  g_signal_connect(G_OBJECT(frame->replace_prev_button),
-    "button-press-event", G_CALLBACK(mrbmacs_replace_prev_button_press), &self);
-  g_signal_connect(G_OBJECT(frame->replace_entry),
-    "activate", G_CALLBACK(mrbmacs_replace_entry_activate), &self);
 
   // notebook
   g_signal_connect(G_OBJECT(frame->notebook),

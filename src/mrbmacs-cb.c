@@ -50,10 +50,20 @@ mrbmacs_keypress(GtkWidget *widget, GdkEventKey *event, gpointer data)
   mrb_value app;
   app = *(mrb_value *)data;
 
-  if (mrbmacs_echo_active) {
+  switch (mrbmacs_echo_active) {
+  case MRBMACS_ECHO_MODE_MODAL:
     /* consumed as a prompt control key -> stop propagation;
        otherwise let it reach the focused echo widget */
     return mrbmacs_echo_handle_key(event->state, event->keyval) ? TRUE : FALSE;
+  case MRBMACS_ECHO_MODE_KEY: {
+    mrb_value handled = mrb_funcall(mrb, app, "echo_key", 2,
+      mrb_fixnum_value(event->state), mrb_fixnum_value(event->keyval));
+    /* TRUE  -> mrbmacs consumed the key
+       FALSE -> let it reach the focused echo widget (type into the pattern) */
+    return mrb_test(handled) ? TRUE : FALSE;
+  }
+  default:
+    break;
   }
 
   send_key = mrb_funcall(mrb, app, "key_press", 2, mrb_fixnum_value(event->state),
@@ -63,6 +73,24 @@ mrbmacs_keypress(GtkWidget *widget, GdkEventKey *event, gpointer data)
   } else {
     return TRUE;
   }
+}
+
+/* sci-notify from the echo widget. Only text changes matter: they drive the
+ * incremental search / query-replace pattern (app->echo_sci_notify). */
+gboolean
+mrbmacs_echo_sci_notify(GtkWidget *widget, gint n, SCNotification *notification, gpointer user_data)
+{
+  (void)widget;
+  (void)n;
+  (void)user_data;
+  if (notification->nmhdr.code != SCN_MODIFIED) {
+    return FALSE;
+  }
+  mrb_value app = mrb_gv_get(mrb, mrb_intern_lit(mrb, "$app"));
+  if (!mrb_nil_p(app)) {
+    mrb_funcall(mrb, app, "echo_sci_notify", 1, mrb_nil_value());
+  }
+  return FALSE;
 }
 
 gboolean

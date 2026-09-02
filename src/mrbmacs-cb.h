@@ -8,5 +8,6 @@ void open_osx(GtkosxApplication *osxapp, gchar *path, gpointer p);
 gboolean mrbmacs_select_tab(GtkWidget *widget, GtkWidget *page, guint page_num, gpointer data);
 gboolean mrbmacs_keypress(GtkWidget *widget, GdkEventKey *event, gpointer data);
 gboolean mrbmacs_sci_notify(GtkWidget *widget, gint n, SCNotification *notification, gpointer user_data);
+gboolean mrbmacs_echo_sci_notify(GtkWidget *widget, gint n, SCNotification *notification, gpointer user_data);
 
 #endif /* MRBMACS_CB_H */

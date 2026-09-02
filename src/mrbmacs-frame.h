@@ -4,14 +4,16 @@
 struct mrb_mrbmacs_frame_data {
   GtkWidget *mainwin;
   GtkWidget *mode_win;
-  GtkWidget *search_bar;
-  GtkWidget *search_entry;
-  GtkWidget *find_next_button;
-  GtkWidget *find_prev_button;
-  GtkWidget *replace_bar;
-  GtkWidget *replace_entry;
-  GtkWidget *replace_next_button;
-  GtkWidget *replace_prev_button;
+  /* The GtkSearchBar search/replace UI was removed in favour of the echo
+     area; these 8 slots are kept unused so the struct layout is unchanged. */
+  GtkWidget *unused_search_1;
+  GtkWidget *unused_search_2;
+  GtkWidget *unused_search_3;
+  GtkWidget *unused_search_4;
+  GtkWidget *unused_search_5;
+  GtkWidget *unused_search_6;
+  GtkWidget *unused_search_7;
+  GtkWidget *unused_search_8;
   GtkWidget *notebook;
   GtkWidget *menu;
 };

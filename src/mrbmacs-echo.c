@@ -69,9 +69,9 @@ mrb_mrbmacs_frame_wait_echo_event(mrb_state *mrb, mrb_value self)
   mrb_funcall(mrb, echo_win, "sci_grab_focus", 0);
 
   mrbmacs_echo_response = MRBMACS_ECHO_NONE;
-  mrbmacs_echo_active = 1;
+  mrbmacs_echo_active = MRBMACS_ECHO_MODE_MODAL;
   gtk_main();
-  mrbmacs_echo_active = 0;
+  mrbmacs_echo_active = MRBMACS_ECHO_MODE_NONE;
 
   switch (mrbmacs_echo_response) {
   case MRBMACS_ECHO_ENTER:
@@ -92,13 +92,26 @@ mrb_mrbmacs_frame_wait_confirmation_event(mrb_state *mrb, mrb_value self)
 
   mrbmacs_echo_response = MRBMACS_ECHO_NONE;
   mrbmacs_echo_confirmation = 1;
-  mrbmacs_echo_active = 1;
+  mrbmacs_echo_active = MRBMACS_ECHO_MODE_MODAL;
   gtk_main();
-  mrbmacs_echo_active = 0;
+  mrbmacs_echo_active = MRBMACS_ECHO_MODE_NONE;
   mrbmacs_echo_confirmation = 0;
 
   return mrb_symbol_value(mrb_intern_lit(
     mrb, mrbmacs_echo_response == MRBMACS_ECHO_YES ? "yes" : "no"));
+}
+
+/* Enter / leave the non-modal echo key mode (isearch / query-replace).
+ * Called from the frame's start_isearch / finish_isearch etc. */
+static mrb_value
+mrb_mrbmacs_frame_echo_key_mode(mrb_state *mrb, mrb_value self)
+{
+  mrb_bool on;
+  mrb_get_args(mrb, "b", &on);
+  if (mrbmacs_echo_active != MRBMACS_ECHO_MODE_MODAL) {
+    mrbmacs_echo_active = on ? MRBMACS_ECHO_MODE_KEY : MRBMACS_ECHO_MODE_NONE;
+  }
+  return self;
 }
 
 void
@@ -111,4 +124,6 @@ mrb_mrbmacs_gtk_frame_echo_init(mrb_state *mrb)
     mrb_mrbmacs_frame_wait_echo_event, MRB_ARGS_NONE());
   mrb_define_method(mrb, frame, "wait_confirmation_event",
     mrb_mrbmacs_frame_wait_confirmation_event, MRB_ARGS_NONE());
+  mrb_define_method(mrb, frame, "echo_key_mode",
+    mrb_mrbmacs_frame_echo_key_mode, MRB_ARGS_REQ(1));
 }
