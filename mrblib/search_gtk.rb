@@ -4,7 +4,7 @@ module Mrbmacs
   # arrive through echo_sci_notify and drive the search, control keys (C-s /
   # C-r / Enter / C-g) arrive through echo_key while the frame is in
   # echo_key_mode. To be shared with Cocoa once both are proven.
-  class ApplicationGtk < Application
+  class ApplicationGtk < ApplicationGui
     # Build a key string and dispatch it while echo owns the keyboard.
     # Returns true when mrbmacs consumed the key, false to let the character
     # reach @echo_win (i.e. type it into the pattern).

@@ -1,5 +1,5 @@
 module Mrbmacs
-  class ApplicationGtk < Application
+  class ApplicationGtk < ApplicationGui
     #    def switch_to_buffer(buffername = nil)
     #      $stderr.puts "switch to buffer"
     #    end

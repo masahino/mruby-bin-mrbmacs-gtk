@@ -3,7 +3,7 @@ module Mrbmacs
   # (replace_cocoa.rb). Search / replacement strings are read with echo_gets;
   # the per-match y / n / ! / q / C-g keys arrive through echo_key_press while
   # the frame is in echo_key_mode. To be shared with Cocoa once both are proven.
-  class ApplicationGtk < Application
+  class ApplicationGtk < ApplicationGui
     def start_replace(query, search_text = nil, replacement_text = nil)
       if @frame.view_win.sci_get_readonly
         @frame.echo_puts('Buffer is read-only')

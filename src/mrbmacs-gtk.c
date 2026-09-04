@@ -120,7 +120,7 @@ mrb_mruby_bin_mrbmacs_gtk_gem_init(mrb_state *mrb_in)
   mrb = mrb_in;
   mrbmacs_module = mrb_module_get(mrb, "Mrbmacs");
   mrbmacs_class = mrb_define_class_under(mrb, mrbmacs_module, "ApplicationGtk",
-    mrb_class_get_under(mrb, mrbmacs_module, "Application"));
+    mrb_class_get_under(mrb, mrbmacs_module, "ApplicationGui"));
 
   mrb_define_method(mrb, mrbmacs_class, "editloop", mrb_mrbmacs_editloop, MRB_ARGS_NONE());
   mrb_define_method(mrb, mrbmacs_class, "add_gtk_io_callback", mrb_mrbmacs_add_gtk_io_callback, MRB_ARGS_REQ(1));

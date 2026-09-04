@@ -1,6 +1,6 @@
 module Mrbmacs
   # ApplicationGtk
-  class ApplicationGtk < Application
+  class ApplicationGtk < ApplicationGui
     def add_buffer_to_frame(buffer)
       @frame.add_new_tab(buffer)
       @frame.view_win.sci_set_identifier(@frame.edit_win_list.index(@frame.edit_win))
