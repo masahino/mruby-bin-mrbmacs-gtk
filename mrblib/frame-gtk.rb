@@ -72,12 +72,6 @@ module Mrbmacs
       @echo_win.sci_document_end
     end
 
-    def echo_set_prompt(prompt)
-      width = @echo_win.sci_text_width(Scintilla::STYLE_DEFAULT, prompt)
-      @echo_win.sci_set_margin_widthn(3, width)
-      @echo_win.sci_margin_set_text(0, prompt)
-    end
-
     # --- non-modal echo prompts (isearch / query-replace) ---------------
     # The pattern is edited directly in @echo_win while the frame is in
     # echo_key_mode; control keys go through ApplicationGtk#echo_key.
