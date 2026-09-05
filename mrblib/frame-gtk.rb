@@ -44,25 +44,6 @@ module Mrbmacs
       @view_win.sci_marker_set_back(Scintilla::SC_MARKNUM_FOLDERMIDTAIL, 0x000000)
     end
 
-    def apply_theme(theme)
-      @theme = theme
-      @edit_win_list.each do |w|
-        w.apply_theme(theme)
-      end
-      apply_echo_theme(theme) unless @echo_win.nil?
-    end
-
-    def apply_echo_theme(theme)
-      @echo_win.sci_style_set_fore(Scintilla::STYLE_DEFAULT, theme.foreground_color)
-      @echo_win.sci_style_set_back(Scintilla::STYLE_DEFAULT, theme.background_color)
-      @echo_win.sci_style_clear_all
-      # sci_style_clear_all resets STYLE_LINENUMBER.back to the light system
-      # colour; the prompt lives in an SC_MARGIN_TEXT margin filled with it.
-      @echo_win.sci_style_set_fore(Scintilla::STYLE_LINENUMBER, theme.foreground_color)
-      @echo_win.sci_style_set_back(Scintilla::STYLE_LINENUMBER, theme.background_color)
-      @echo_win.sci_set_caret_fore(theme.foreground_color)
-    end
-
     def echo_puts(text)
       return if @echo_win.nil?
 
