@@ -102,6 +102,8 @@ mrb_mrbmacs_frame_init(mrb_state *mrb, mrb_value self)
   (struct mrb_mrbmacs_frame_data *)mrb_malloc(mrb, sizeof(struct mrb_mrbmacs_frame_data));
 
   mainwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+  g_signal_connect(mainwin, "delete-event",
+                   G_CALLBACK(mrbmacs_request_exit), NULL);
 //  gtk_widget_set_size_request(mainwin, -1, -1);
 //  gtk_window_set_default_size(GTK_WINDOW(mainwin), 738, 768);
 

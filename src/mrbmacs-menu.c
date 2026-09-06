@@ -27,6 +27,19 @@ mrbmacs_menu_run_command(GtkWidget *widget, gpointer user_data)
   return FALSE;
 }
 
+gboolean
+mrbmacs_request_exit(GtkWidget *widget, GdkEvent *event, gpointer user_data)
+{
+  (void)widget;
+  (void)event;
+  (void)user_data;
+  mrb_funcall(
+    mrb, mrb_gv_get(mrb, mrb_intern_lit(mrb, "$app")),
+    "save_buffers_kill_terminal", 0
+  );
+  return TRUE;
+}
+
 GtkWidget *create_file_menu()
 {
 
@@ -42,7 +55,8 @@ GtkWidget *create_file_menu()
 
   menuitem = gtk_menu_item_new_with_label("Quit");
   gtk_menu_shell_append(GTK_MENU_SHELL(menu), menuitem);
-  g_signal_connect(menuitem, "activate", G_CALLBACK(gtk_main_quit), NULL);
+  g_signal_connect(menuitem, "activate", G_CALLBACK(mrbmacs_menu_run_command),
+                   (gpointer)"save_buffers_kill_terminal");
   return menuitem_root;
 }
 
