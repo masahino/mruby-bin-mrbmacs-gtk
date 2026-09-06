@@ -28,12 +28,28 @@ typedef enum {
 
 int mrbmacs_echo_active = 0;
 static int mrbmacs_echo_confirmation = 0;
+static int mrbmacs_echo_choice = 0;
+static guint mrbmacs_echo_choice_keyval = 0;
 static mrbmacs_echo_response_t mrbmacs_echo_response = MRBMACS_ECHO_NONE;
 
 gboolean
 mrbmacs_echo_handle_key(guint state, guint keyval)
 {
   const gboolean ctrl = (state & GDK_CONTROL_MASK) != 0;
+
+  if (mrbmacs_echo_choice) {
+    if (ctrl && keyval == GDK_KEY_g) {
+      mrbmacs_echo_choice_keyval = 0;
+    } else if (ctrl) {
+      return TRUE;
+    } else if (gdk_keyval_to_unicode(keyval) < 128) {
+      mrbmacs_echo_choice_keyval = keyval;
+    } else {
+      return TRUE;
+    }
+    gtk_main_quit();
+    return TRUE;
+  }
 
   if (mrbmacs_echo_confirmation) {
     if (keyval == GDK_KEY_y || keyval == GDK_KEY_Y) {
@@ -101,6 +117,31 @@ mrb_mrbmacs_frame_wait_confirmation_event(mrb_state *mrb, mrb_value self)
     mrb, mrbmacs_echo_response == MRBMACS_ECHO_YES ? "yes" : "no"));
 }
 
+static mrb_value
+mrb_mrbmacs_frame_wait_choice_event(mrb_state *mrb, mrb_value self)
+{
+  mrb_value echo_win = mrb_iv_get(mrb, self, mrb_intern_lit(mrb, "@echo_win"));
+  gunichar character;
+  gchar text[7];
+  gint length;
+
+  mrb_funcall(mrb, echo_win, "sci_grab_focus", 0);
+
+  mrbmacs_echo_choice_keyval = 0;
+  mrbmacs_echo_choice = 1;
+  mrbmacs_echo_active = MRBMACS_ECHO_MODE_MODAL;
+  gtk_main();
+  mrbmacs_echo_active = MRBMACS_ECHO_MODE_NONE;
+  mrbmacs_echo_choice = 0;
+
+  if (mrbmacs_echo_choice_keyval == 0) {
+    return mrb_nil_value();
+  }
+  character = gdk_keyval_to_unicode(mrbmacs_echo_choice_keyval);
+  length = g_unichar_to_utf8(character, text);
+  return mrb_str_new(mrb, text, length);
+}
+
 /* Enter / leave the non-modal echo key mode (isearch / query-replace).
  * Called from the frame's start_isearch / finish_isearch etc. */
 static mrb_value
@@ -124,6 +165,8 @@ mrb_mrbmacs_gtk_frame_echo_init(mrb_state *mrb)
     mrb_mrbmacs_frame_wait_echo_event, MRB_ARGS_NONE());
   mrb_define_method(mrb, frame, "wait_confirmation_event",
     mrb_mrbmacs_frame_wait_confirmation_event, MRB_ARGS_NONE());
+  mrb_define_method(mrb, frame, "wait_choice_event",
+    mrb_mrbmacs_frame_wait_choice_event, MRB_ARGS_NONE());
   mrb_define_method(mrb, frame, "echo_key_mode",
     mrb_mrbmacs_frame_echo_key_mode, MRB_ARGS_REQ(1));
 }
